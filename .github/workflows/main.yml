@@ -1,0 +1,49 @@
+name: Python
+
+on: [push]
+
+jobs:
+  build-linux:
+    runs-on: Ubuntu-20.04
+    strategy:
+      max-parallel: 5
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        lfs: true
+    - uses: conda-incubator/setup-miniconda@v2
+      with:
+        miniconda-version: "latest"
+        activate-environment: inference
+        environment-file: ./environment.yml
+    - name: flake8
+      shell: bash -l {0}
+      run: |
+        conda activate inference
+        flake8 . --count --exit-zero --statistics
+    - name: mypy
+      shell: bash -l {0}
+      run: |
+        conda activate inference
+        find . -type f -name "*.py" | xargs mypy
+    - name: Test with pytest
+      shell: bash -l {0}
+      env:
+        CUSTOMCONNSTR_AZUREML_SERVICE_PRINCIPAL_SECRET: ${{ secrets.CUSTOMCONNSTR_AZUREML_SERVICE_PRINCIPAL_SECRET }}
+        CUSTOMCONNSTR_API_AUTH_SECRET: ${{ secrets.CUSTOMCONNSTR_API_AUTH_SECRET }}
+        CLUSTER: ${{ secrets.CLUSTER }}
+        WORKSPACE_NAME: ${{ secrets.WORKSPACE_NAME }}
+        EXPERIMENT_NAME: ${{ secrets.EXPERIMENT_NAME }}
+        RESOURCE_GROUP: ${{ secrets.RESOURCE_GROUP }}
+        SUBSCRIPTION_ID: ${{ secrets.SUBSCRIPTION_ID }}
+        APPLICATION_ID: ${{ secrets.APPLICATION_ID }}
+        TENANT_ID: ${{ secrets.TENANT_ID }}
+      run: |
+        conda activate inference
+        pytest --cov=./ --cov-report=html
+    - name: Archive code coverage results
+      uses: actions/upload-artifact@v2
+      with:
+        name: code-coverage-report
+        path: htmlcov/*

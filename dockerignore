@@ -1,0 +1,13 @@
+# See https://docs.docker.com/engine/reference/builder/#dockerignore-file
+# Put files here that you don't want copied into your bundle's invocation image
+.gitignore
+Dockerfile.tmpl
+*.dcm
+
+# IGNORE THESE FILES FOR CNAB GENERATION
+azure-stack-profile.txt
+azure-stack-profile.template.txt
+porter-helpers.sh
+README.md
+ReadMe.txt
+Start.md
