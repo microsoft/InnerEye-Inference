@@ -10,6 +10,9 @@ jobs:
 
   build-and-deploy:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ../../
     steps:
 
     - name: Azure Login
@@ -21,5 +24,4 @@ jobs:
       uses: azure/CLI@v1
       with:
         inlineScript: |
-          az webapp show --name innereyeinferencedev --subscription "InnerEye Dev" -g InnerEyeInference
           az webapp up --name innereyeinferencedev --subscription "InnerEye Dev" -g InnerEyeInference
