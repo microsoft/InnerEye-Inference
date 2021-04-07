@@ -20,7 +20,6 @@ jobs:
     - name: az deploy
       uses: azure/CLI@v1
       with:
-        azcliversion: 2.0.72
         inlineScript: |
           az webapp show --name test-python12345 --subscription "InnerEye Dev" -g InnerEyeInference
-          az webapp deploy --name test-python12345 --subscription "InnerEye Dev" -g InnerEyeInference --src-path ../../
+          az webapp up --name test-python12345 --subscription "InnerEye Dev" -g InnerEyeInference
