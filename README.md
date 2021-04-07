@@ -57,7 +57,7 @@ Run with `source set_environment.sh`
 If you would like to reproduce the automatic deployment of the service for testing purposes:
 
 * `az ad sp create-for-rbac --name "<name>" --role contributor --scope /subscription/<sub_id>>/resourceGroups/<resource_group>/providers/Microsoft.Web/sites/<appservice> --sdk-auth`
-* The previous command will return a json object with the application and secret to be used in .github/workflows/deploy.yml
+* The previous command will return a json object with the content for the variable `secrets.AZURE_CREDENTIALS` .github/workflows/deploy.yml
 
 ## Help and Bug Reporting
 
