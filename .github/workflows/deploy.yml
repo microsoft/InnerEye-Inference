@@ -1,8 +1,8 @@
 # File: .github/workflows/workflow.yml
 
-on: [push]
-  #push:
-  #  branches: main
+on:
+  push:
+    branches: main
 
 name: Deploy to DEV
 
