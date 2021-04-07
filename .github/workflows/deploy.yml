@@ -14,16 +14,17 @@ jobs:
       run:
         working-directory: $GITHUB_WORKSPACE
     steps:
-    - name: Azure Login
-      uses: azure/login@v1
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - uses: actions/checkout@v2
+          with:
+            lfs: true
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-    - name: az deploy
-      uses: azure/CLI@v1
-      with:
-        azcliversion: 2.20.0
-        inlineScript: |
-          cd $GITHUB_WORKSPACE
-          ls
-          az webapp up --name innereyeinferencedev --subscription "InnerEye Dev" -g InnerEyeInference
+      - name: az deploy
+        uses: azure/CLI@v1
+        with:
+          azcliversion: 2.20.0
+          inlineScript: |
+            az webapp up --name innereyeinferencedev --subscription "InnerEye Dev" -g InnerEyeInference
