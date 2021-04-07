@@ -7,7 +7,6 @@ on: [push]
 name: Deploy to DEV
 
 jobs:
-
   build-and-deploy:
     runs-on: ubuntu-latest
     defaults:
@@ -15,8 +14,8 @@ jobs:
         working-directory: $GITHUB_WORKSPACE
     steps:
     - uses: actions/checkout@v2
-        with:
-          lfs: true
+      with:
+        lfs: true
     - name: Azure Login
       uses: azure/login@v1
       with:
