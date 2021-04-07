@@ -1,0 +1,25 @@
+# File: .github/workflows/workflow.yml
+
+on:
+  push:
+    branches: master
+
+name: AzureCLISample
+
+jobs:
+
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Azure CLI script
+      uses: azure/CLI@v1
+      with:
+        azcliversion: 2.0.72
+        inlineScript: |
+          az webapp up --sku S1 --name test-python12345 --subscription <your_subscription_name> -g InnerEyeInference
