@@ -22,6 +22,6 @@ jobs:
     - name: az deploy
       uses: azure/CLI@v1
       with:
-        azcliversion: 2.0.75
+        azcliversion: 2.20.0
         inlineScript: |
           az webapp up --name innereyeinferencedev --subscription "InnerEye Dev" -g InnerEyeInference
