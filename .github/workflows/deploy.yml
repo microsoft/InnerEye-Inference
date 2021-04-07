@@ -24,4 +24,5 @@ jobs:
       with:
         azcliversion: 2.20.0
         inlineScript: |
+          pwd
           az webapp up --name innereyeinferencedev --subscription "InnerEye Dev" -g InnerEyeInference
