@@ -24,6 +24,6 @@ jobs:
       with:
         azcliversion: 2.20.0
         inlineScript: |
-          pwd
+          cd $GITHUB_WORKSPACE
           ls
           az webapp up --name innereyeinferencedev --subscription "InnerEye Dev" -g InnerEyeInference
