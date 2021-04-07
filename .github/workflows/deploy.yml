@@ -12,9 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ../../
+        working-directory: $GITHUB_WORKSPACE
     steps:
-
     - name: Azure Login
       uses: azure/login@v1
       with:
