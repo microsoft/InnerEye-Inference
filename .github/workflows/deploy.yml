@@ -22,5 +22,5 @@ jobs:
       with:
         azcliversion: 2.0.72
         inlineScript: |
-          az webapp show --name test-python12345
+          az webapp show --name test-python12345 --subscription "InnerEye Dev" -g InnerEyeInference
           az webapp deploy --name test-python12345 --subscription "InnerEye Dev" -g InnerEyeInference --src-path ../../
