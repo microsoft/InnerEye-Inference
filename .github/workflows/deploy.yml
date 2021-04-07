@@ -21,5 +21,5 @@ jobs:
       uses: azure/CLI@v1
       with:
         inlineScript: |
-          az webapp show --name test-python12345 --subscription "InnerEye Dev" -g InnerEyeInference
-          az webapp up --name test-python12345 --subscription "InnerEye Dev" -g InnerEyeInference
+          az webapp show --name innereyeinferencedev --subscription "InnerEye Dev" -g InnerEyeInference
+          az webapp up --name innereyeinferencedev --subscription "InnerEye Dev" -g InnerEyeInference
