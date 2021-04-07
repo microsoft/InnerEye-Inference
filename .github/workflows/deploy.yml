@@ -22,4 +22,4 @@ jobs:
       with:
         azcliversion: 2.0.72
         inlineScript: |
-          az webapp up --sku S1 --name test-python12345 --subscription "InnerEye Dev" -g InnerEyeInference
+          az webapp deploy --name test-python12345 --subscription "InnerEye Dev" -g InnerEyeInference
