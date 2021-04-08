@@ -1,0 +1,29 @@
+# File: .github/workflows/workflow.yml
+
+on:
+  push:
+    branches: main
+
+name: Deploy to DEV
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: $GITHUB_WORKSPACE
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        lfs: true
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: az deploy
+      uses: azure/CLI@v1
+      with:
+        azcliversion: 2.20.0
+        inlineScript: |
+          az webapp up --name innereyeinferencedev --subscription "InnerEye Dev" -g InnerEyeInference
