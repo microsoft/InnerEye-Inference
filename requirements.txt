@@ -1,5 +1,5 @@
 Flask==1.1.2
-azureml-sdk==1.19.0
+azureml-sdk==1.23.0
 ruamel.yaml==0.16.12
 conda-merge==0.1.5
 memory-tempfile==2.2.3

@@ -8,27 +8,31 @@ import os
 import shutil
 import tempfile
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 import conda_merge
 import requests
 import ruamel.yaml
 from attr import dataclass
-from azureml.core import Experiment, Model
+from azureml.core import Experiment, Model, ScriptRunConfig, Environment
 from azureml.core.conda_dependencies import CondaDependencies
+from azureml.core.runconfig import RunConfiguration
 from azureml.core.workspace import WORKSPACE_DEFAULT_BLOB_STORE_NAME, Workspace
-from azureml.data.dataset_consumption_config import DatasetConsumptionConfig
 from azureml.train.dnn import PyTorch
 
 from azure_config import AzureConfig
 from source_config import SourceConfig
 
+ENVIRONMENT_VERSION = "1"
 ENVIRONMENT_YAML_FILE_NAME = "environment.yml"
 DEFAULT_RESULT_IMAGE_NAME = "segmentation.dcm.zip"
 DEFAULT_DATA_FOLDER = "data"
+DEFAULT_TEST_IMAGE_NAME = "test.nii.gz"
+DEFAULT_TEST_ZIP_NAME = "test.zip"
 SCORE_SCRIPT = "score.py"
 RUN_SCORING_SCRIPT = "download_model_and_run_scoring.py"
-
+# The property in the model registry that holds the name of the Python environment
+PYTHON_ENVIRONMENT_NAME = "python_environment_name"
 
 def merge_conda_files(files: List[Path], result_file: Path) -> None:
     """
@@ -77,22 +81,25 @@ def _log_conda_dependencies_stats(conda: CondaDependencies, message_prefix: str)
         logging.debug(f"    {p}")
 
 
-def merge_conda_dependencies(files: List[Path]) -> CondaDependencies:
+def merge_conda_dependencies(files: List[Path]) -> Tuple[CondaDependencies, str]:
     """
     Creates a CondaDependencies object from the Conda environments specified in one or more files.
     The resulting object contains the union of the Conda and pip packages in the files, where merging
     is done via the conda_merge package.
     :param files: The Conda environment files to read.
-    :return: A CondaDependencies object that contains packages from all the files.
+    :return: Tuple of (CondaDependencies object that contains packages from all the files,
+    string contents of the merge Conda environment)
     """
     for file in files:
         _log_conda_dependencies_stats(CondaDependencies(file), f"Conda environment in {file}")
-    merged_file = tempfile.NamedTemporaryFile(delete=False)
-    merge_conda_files(files, result_file=Path(merged_file.name))
-    merged_dependencies = CondaDependencies(merged_file.name)
+    temp_merged_file = tempfile.NamedTemporaryFile(delete=False)
+    merged_file_path = Path(temp_merged_file.name)
+    merge_conda_files(files, result_file=merged_file_path)
+    merged_dependencies = CondaDependencies(temp_merged_file.name)
     _log_conda_dependencies_stats(merged_dependencies, "Merged Conda environment")
-    merged_file.close()
-    return merged_dependencies
+    merged_file_contents = merged_file_path.read_text()
+    temp_merged_file.close()
+    return merged_dependencies, merged_file_contents
 
 
 def pytorch_version_from_conda_dependencies(conda_dependencies: CondaDependencies) -> Optional[str]:
@@ -110,60 +117,6 @@ def pytorch_version_from_conda_dependencies(conda_dependencies: CondaDependencie
                     return supported
     return None
 
-
-def create_estimator_from_configs(azure_config: AzureConfig,
-                                  source_config: SourceConfig,
-                                  estimator_inputs: List[DatasetConsumptionConfig]) -> PyTorch:
-    """
-    Create an return a PyTorch estimator from the provided configuration information.
-    :param azure_config: Azure configuration, used to store various values for the job to be submitted
-    :param source_config: source configutation, for other needed values
-    :param estimator_inputs: value for the "inputs" field of the estimator.
-    :return:
-    """
-    # AzureML seems to sometimes expect the entry script path in Linux format, hence convert to posix path
-    entry_script_relative_path = source_config.entry_script.relative_to(source_config.root_folder).as_posix()
-    logging.info(f"Entry script {entry_script_relative_path} ({source_config.entry_script} relative to "
-                 f"source directory {source_config.root_folder})")
-    environment_variables = {
-        "AZUREML_OUTPUT_UPLOAD_TIMEOUT_SEC": str(source_config.upload_timeout_seconds),
-        "MKL_SERVICE_FORCE_INTEL": "1",
-        **(source_config.environment_variables or {})
-    }
-    # Merge the project-specific dependencies with the packages that InnerEye itself needs. This should not be
-    # necessary if the innereye package is installed. It is necessary when working with an outer project and
-    # InnerEye as a git submodule and submitting jobs from the local machine.
-    # In case of version conflicts, the package version in the outer project is given priority.
-    conda_dependencies = merge_conda_dependencies(source_config.conda_dependencies_files)  # type: ignore
-    if azure_config.pip_extra_index_url:
-        # When an extra-index-url is supplied, swap the order in which packages are searched for.
-        # This is necessary if we need to consume packages from extra-index that clash with names of packages on
-        # pypi
-        conda_dependencies.set_pip_option(f"--index-url {azure_config.pip_extra_index_url}")
-        conda_dependencies.set_pip_option("--extra-index-url https://pypi.org/simple")
-    # create Estimator environment
-    framework_version = pytorch_version_from_conda_dependencies(conda_dependencies)
-    assert framework_version is not None, "The AzureML SDK is behind PyTorch, it does not yet know the version we use."
-    logging.info(f"PyTorch framework version: {framework_version}")
-    workspace = azure_config.get_workspace()
-    estimator = PyTorch(
-        source_directory=str(source_config.root_folder),
-        entry_script=entry_script_relative_path,
-        script_params=source_config.script_params,
-        compute_target=azure_config.cluster,
-        # Use blob storage for storing the source, rather than the FileShares section of the storage account.
-        source_directory_data_store=workspace.datastores.get(WORKSPACE_DEFAULT_BLOB_STORE_NAME),
-        inputs=estimator_inputs,
-        environment_variables=environment_variables,
-        shm_size=azure_config.docker_shm_size,
-        use_docker=True,
-        use_gpu=True,
-        framework_version=framework_version
-    )
-    estimator.run_config.environment.python.conda_dependencies = conda_dependencies
-    return estimator
-
-
 @dataclass
 class SubmitForInferenceConfig:
     """
@@ -171,7 +124,7 @@ class SubmitForInferenceConfig:
     """
     model_id: str
     image_data: bytes
-    experiment_name: str = "inference"
+    experiment_name: str
 
 
 def download_files_from_model(model_sas_urls: Dict[str, str], base_name: str, dir_path: Path) -> List[Path]:
@@ -202,6 +155,42 @@ def download_files_from_model(model_sas_urls: Dict[str, str], base_name: str, di
     return downloaded
 
 
+def create_run_config(azure_config: AzureConfig,
+                      source_config: SourceConfig,
+                      environment_name: str) -> ScriptRunConfig:
+    """
+    Creates a configuration to run the InnerEye training script in AzureML.
+    :param azure_config: azure related configurations to use for model scale-out behaviour
+    :param source_config: configurations for model execution, such as name and execution mode
+    :param environment_name: If specified, try to retrieve the existing Python environment with this name. If that
+    is not found, create one from the Conda files provided in `source_config`. This parameter is meant to be used
+    when running inference for an existing model.
+    :return: The configured script run.
+    """
+    # AzureML seems to sometimes expect the entry script path in Linux format, hence convert to posix path
+    entry_script_relative_path = source_config.entry_script.relative_to(source_config.root_folder).as_posix()
+    logging.info(f"Entry script {entry_script_relative_path} ({source_config.entry_script} relative to "
+                 f"source directory {source_config.root_folder})")
+    max_run_duration = None
+    workspace = azure_config.get_workspace()
+    run_config = RunConfiguration(
+        script=entry_script_relative_path,
+        arguments=source_config.script_params,
+    )
+    env = Environment.get(azure_config.get_workspace(), name=environment_name, version=ENVIRONMENT_VERSION)
+    logging.info(f"Using existing Python environment '{env.name}'.")
+    run_config.environment = env
+    run_config.target = azure_config.cluster
+    run_config.max_run_duration_seconds = max_run_duration
+    # Use blob storage for storing the source, rather than the FileShares section of the storage account.
+    run_config.source_directory_data_store = workspace.datastores.get(WORKSPACE_DEFAULT_BLOB_STORE_NAME).name
+    script_run_config = ScriptRunConfig(
+        source_directory=str(source_config.root_folder),
+        run_config=run_config,
+    )
+    return script_run_config
+
+
 def submit_for_inference(args: SubmitForInferenceConfig, workspace: Workspace, azure_config: AzureConfig) -> str:
     """
     Create and submit an inference to AzureML, and optionally download the resulting segmentation.
@@ -222,15 +211,9 @@ def submit_for_inference(args: SubmitForInferenceConfig, workspace: Workspace, a
     image_path = image_folder / "imagedata.zip"
     image_path.write_bytes(args.image_data)
 
-    model_sas_urls = model.get_sas_urls()
-    # Identifies all the files with basename "environment.yml" in the model and downloads them.
-    # These downloads should go into a temp folder that will most likely not be included in the model itself,
-    # because the AzureML run will later download the model into the same folder structure, and the file names might
-    # clash.
-    temp_folder = source_directory_path / "temp_for_scoring"
-    conda_files = download_files_from_model(model_sas_urls, ENVIRONMENT_YAML_FILE_NAME, dir_path=temp_folder)
-    if not conda_files:
-        raise ValueError("At least 1 Conda environment definition must exist in the model.")
+    # Retrieve the name of the Python environment that the training run used. This environment should have been
+    # registered. If no such environment exists, it will be re-create from the Conda files provided.
+    python_environment_name = model.tags.get(PYTHON_ENVIRONMENT_NAME, "")
     # Copy the scoring script from the repository. This will start the model download from Azure, and invoke the
     # scoring script.
     entry_script = source_directory_path / Path(RUN_SCORING_SCRIPT).name
@@ -240,19 +223,19 @@ def submit_for_inference(args: SubmitForInferenceConfig, workspace: Workspace, a
     source_config = SourceConfig(
         root_folder=source_directory_path,
         entry_script=entry_script,
-        script_params={"--model-folder": ".",
-                       "--model-id": model_id,
-                       SCORE_SCRIPT: "",
+        script_params=["--model-folder", ".",
+                       "--model-id", model_id,
+                       SCORE_SCRIPT,
                        # The data folder must be relative to the root folder of the AzureML job. test_image_files
                        # is then just the file relative to the data_folder
-                       "--data_folder": image_path.parent.name,
-                       "--image_files": image_path.name,
-                       "--use_dicom": "True"},
-        conda_dependencies_files=conda_files,
+                       "--data_folder", image_path.parent.name,
+                       "--image_files", image_path.name,
+                       "--use_dicom", "True",
+                       "--model_id", model_id],
     )
-    estimator = create_estimator_from_configs(azure_config, source_config, [])
+    run_config = create_run_config(azure_config, source_config, environment_name=python_environment_name)
     exp = Experiment(workspace=workspace, name=args.experiment_name)
-    run = exp.submit(estimator)
+    run = exp.submit(run_config)
     logging.info(f"Submitted run {run.id} in experiment {run.experiment.name}")
     logging.info(f"Run URL: {run.get_portal_url()}")
     source_directory.cleanup()

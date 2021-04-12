@@ -13,7 +13,6 @@ from unittest import mock
 import zipfile
 
 from azureml._restclient.constants import RunStatus
-from azureml._restclient.exceptions import ServiceException
 from azureml.core import Experiment, Model, Workspace
 from azureml.exceptions import WebserviceException
 from flask import Response
@@ -143,11 +142,11 @@ def test_model_start_authenticated_valid_model_id() -> None:
     # Patch the method Experiment.submit to prevent the AzureML experiment actually running.
     with mock.patch.object(Experiment, 'submit', return_value=run_mock):
         with app.test_client() as client:
-            response = client.post("/v1/model/start/PassThroughModel:3",
+            response = client.post("/v1/model/start/PassThroughModel:4",
                                    headers={API_AUTH_SECRET_HEADER_NAME: API_AUTH_SECRET})
+            assert response.status_code == HTTP_STATUS_CODE.CREATED.value
             assert response.content_type == 'text/plain'
             assert response.data == bytes(run_mock.id, 'utf-8')
-            assert response.status_code == HTTP_STATUS_CODE.CREATED.value
 
 
 def test_model_results_unauthorized() -> None:
@@ -180,11 +179,11 @@ def test_model_results_authenticated_invalid_run_id() -> None:
     This should return HTTP status code 404 (not found) and error content.
     """
     # Patch the method Workspace.get_run to raise an exception as if the run_id was invalid.
-    #exception_object = mock.Mock(response=mock.Mock(status_code=404))
-    #with mock.patch.object(Workspace, 'get_run', side_effect=ServiceException(exception_object)):
+    # exception_object = mock.Mock(response=mock.Mock(status_code=404))
+    # with mock.patch.object(Workspace, 'get_run', side_effect=ServiceException(exception_object)):
     with app.test_client() as client:
         response = client.get("/v1/model/results/invalid_run_id",
-                                headers={API_AUTH_SECRET_HEADER_NAME: API_AUTH_SECRET})
+                              headers={API_AUTH_SECRET_HEADER_NAME: API_AUTH_SECRET})
         assert_response_error_type(response, HTTP_STATUS_CODE.NOT_FOUND,
                                    ERROR_EXTRA_DETAILS.INVALID_RUN_ID)
 
@@ -260,10 +259,10 @@ def submit_for_inference_and_wait(model_id: str, data: bytes) -> Any:
         response = client.post(f"/v1/model/start/{model_id}",
                                data=data,
                                headers={API_AUTH_SECRET_HEADER_NAME: API_AUTH_SECRET})
+        assert response.status_code == HTTP_STATUS_CODE.CREATED.value
         assert response.content_type == 'text/plain'
         run_id = response.data.decode('utf-8')
         assert run_id is not None
-        assert response.status_code == HTTP_STATUS_CODE.CREATED.value
 
         start = time.time()
         while True:
@@ -281,12 +280,12 @@ def submit_for_inference_and_wait(model_id: str, data: bytes) -> Any:
 
 def test_submit_for_inference_end_to_end() -> None:
     """
-    Test that submitting a zipped DICOM series to model PassThroughModel:3 returns
+    Test that submitting a zipped DICOM series to model PassThroughModel:4 returns
     the expected DICOM-RT format.
     """
     image_data = create_zipped_dicom_series()
     assert len(image_data) > 0
-    response = submit_for_inference_and_wait("PassThroughModel:3", image_data)
+    response = submit_for_inference_and_wait("PassThroughModel:4", image_data)
     assert response.content_type == 'application/zip'
     assert response.status_code == HTTP_STATUS_CODE.OK.value
     # Create a scratch directory
@@ -313,12 +312,16 @@ def test_submit_for_inference_end_to_end() -> None:
         assert ds is not None
         # Check the modality
         assert ds.Modality == 'RTSTRUCT'
+        assert ds.Manufacturer == 'Default_Manufacturer'
+        assert ds.Interpreter == 'Default_Interpreter'
+        assert ds.SoftwareVersions == 'PassThroughModel:4'
         # Check the structure names
         expected_structure_names = ["SpinalCord", "Lung_R", "Lung_L", "Heart", "Esophagus"]
         assert len(ds.StructureSetROISequence) == len(expected_structure_names)
         for i, item in enumerate(expected_structure_names):
             assert ds.StructureSetROISequence[i].ROINumber == i + 1
             assert ds.StructureSetROISequence[i].ROIName == item
+            assert ds.StructureSetROISequence[i].ROIInterpretedType == "ORGAN"
         assert len(ds.ROIContourSequence) == len(expected_structure_names)
         for i, item in enumerate(expected_structure_names):
             assert ds.ROIContourSequence[i].ReferencedROINumber == i + 1
@@ -332,6 +335,6 @@ def test_submit_for_inference_bad_image_file() -> None:
     """
     # Get a random 1Kb
     image_data = bytes([random.randint(0, 255) for _ in range(0, 1024)])
-    response = submit_for_inference_and_wait("PassThroughModel:3", image_data)
+    response = submit_for_inference_and_wait("PassThroughModel:4", image_data)
     assert_response_error_type(response, HTTP_STATUS_CODE.BAD_REQUEST,
                                ERROR_EXTRA_DETAILS.INVALID_ZIP_FILE)
