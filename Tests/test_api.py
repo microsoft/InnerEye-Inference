@@ -313,7 +313,6 @@ def test_submit_for_inference_end_to_end() -> None:
         # Check the modality
         assert ds.Modality == 'RTSTRUCT'
         assert ds.Manufacturer == 'Default_Manufacturer'
-        assert ds.Interpreter == 'Default_Interpreter'
         assert ds.SoftwareVersions == 'PassThroughModel:4'
         # Check the structure names
         expected_structure_names = ["SpinalCord", "Lung_R", "Lung_L", "Heart", "Esophagus"]
@@ -321,7 +320,8 @@ def test_submit_for_inference_end_to_end() -> None:
         for i, item in enumerate(expected_structure_names):
             assert ds.StructureSetROISequence[i].ROINumber == i + 1
             assert ds.StructureSetROISequence[i].ROIName == item
-            assert ds.StructureSetROISequence[i].ROIInterpretedType == "ORGAN"
+            assert ds.RTROIObservationsSequence[i].RTROIInterpretedType == "ORGAN"
+            assert "Default_Interpreter" in ds.RTROIObservationsSequence[i].ROIInterpreter
         assert len(ds.ROIContourSequence) == len(expected_structure_names)
         for i, item in enumerate(expected_structure_names):
             assert ds.ROIContourSequence[i].ReferencedROINumber == i + 1
