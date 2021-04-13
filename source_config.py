@@ -12,6 +12,4 @@ class SourceConfig:
     root_folder: Path
     entry_script: Path
     script_params: List[str] = field(default_factory=list)
-    upload_timeout_seconds: int = 36000
-    environment_variables: Optional[Dict[str, str]] = None
 

@@ -1,7 +1,5 @@
 Flask==1.1.2
 azureml-sdk==1.23.0
-ruamel.yaml==0.16.12
-conda-merge==0.1.5
 memory-tempfile==2.2.3
 pytest==6.0.1
 flask-injector==0.12.3

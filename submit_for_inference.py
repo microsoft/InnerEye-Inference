@@ -8,114 +8,22 @@ import os
 import shutil
 import tempfile
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
 
-import conda_merge
-import requests
-import ruamel.yaml
 from attr import dataclass
 from azureml.core import Experiment, Model, ScriptRunConfig, Environment
-from azureml.core.conda_dependencies import CondaDependencies
 from azureml.core.runconfig import RunConfiguration
 from azureml.core.workspace import WORKSPACE_DEFAULT_BLOB_STORE_NAME, Workspace
-from azureml.train.dnn import PyTorch
 
 from azure_config import AzureConfig
 from source_config import SourceConfig
 
 ENVIRONMENT_VERSION = "1"
-ENVIRONMENT_YAML_FILE_NAME = "environment.yml"
 DEFAULT_RESULT_IMAGE_NAME = "segmentation.dcm.zip"
 DEFAULT_DATA_FOLDER = "data"
-DEFAULT_TEST_IMAGE_NAME = "test.nii.gz"
-DEFAULT_TEST_ZIP_NAME = "test.zip"
 SCORE_SCRIPT = "score.py"
 RUN_SCORING_SCRIPT = "download_model_and_run_scoring.py"
 # The property in the model registry that holds the name of the Python environment
 PYTHON_ENVIRONMENT_NAME = "python_environment_name"
-
-def merge_conda_files(files: List[Path], result_file: Path) -> None:
-    """
-    Merges the given Conda environment files using the conda_merge package, and writes the merged file to disk.
-    :param files: The Conda environment files to read.
-    :param result_file: The location where the merge results should be written.
-    """
-    # This code is a slightly modified version of conda_merge. That code can't be re-used easily
-    # it defaults to writing to stdout
-    env_definitions = [conda_merge.read_file(str(f)) for f in files]
-    unified_definition = {}
-    NAME = "name"
-    CHANNELS = "channels"
-    DEPENDENCIES = "dependencies"
-    name = conda_merge.merge_names(env.get(NAME) for env in env_definitions)
-    if name:
-        unified_definition[NAME] = name
-    try:
-        channels = conda_merge.merge_channels(env.get(CHANNELS) for env in env_definitions)
-    except conda_merge.MergeError:
-        logging.error("Failed to merge channel priorities.")
-        raise
-    if channels:
-        unified_definition[CHANNELS] = channels
-    deps = conda_merge.merge_dependencies(env.get(DEPENDENCIES) for env in env_definitions)
-    if deps:
-        unified_definition[DEPENDENCIES] = deps
-    with result_file.open("w") as f:
-        ruamel.yaml.dump(unified_definition, f, indent=2, default_flow_style=False)
-
-
-def _log_conda_dependencies_stats(conda: CondaDependencies, message_prefix: str) -> None:
-    """
-    Write number of conda and pip packages to logs.
-    :param conda: A conda dependencies object
-    :param message_prefix: A message to prefix to the log string.
-    """
-    conda_packages_count = len(list(conda.conda_packages))
-    pip_packages_count = len(list(conda.pip_packages))
-    logging.info(f"{message_prefix}: {conda_packages_count} conda packages, {pip_packages_count} pip packages")
-    logging.debug("  Conda packages:")
-    for p in conda.conda_packages:
-        logging.debug(f"    {p}")
-    logging.debug("  Pip packages:")
-    for p in conda.pip_packages:
-        logging.debug(f"    {p}")
-
-
-def merge_conda_dependencies(files: List[Path]) -> Tuple[CondaDependencies, str]:
-    """
-    Creates a CondaDependencies object from the Conda environments specified in one or more files.
-    The resulting object contains the union of the Conda and pip packages in the files, where merging
-    is done via the conda_merge package.
-    :param files: The Conda environment files to read.
-    :return: Tuple of (CondaDependencies object that contains packages from all the files,
-    string contents of the merge Conda environment)
-    """
-    for file in files:
-        _log_conda_dependencies_stats(CondaDependencies(file), f"Conda environment in {file}")
-    temp_merged_file = tempfile.NamedTemporaryFile(delete=False)
-    merged_file_path = Path(temp_merged_file.name)
-    merge_conda_files(files, result_file=merged_file_path)
-    merged_dependencies = CondaDependencies(temp_merged_file.name)
-    _log_conda_dependencies_stats(merged_dependencies, "Merged Conda environment")
-    merged_file_contents = merged_file_path.read_text()
-    temp_merged_file.close()
-    return merged_dependencies, merged_file_contents
-
-
-def pytorch_version_from_conda_dependencies(conda_dependencies: CondaDependencies) -> Optional[str]:
-    """
-    Given a CondaDependencies object, look for a spec of the form "pytorch=...", and return
-    whichever supported version is compatible with the value, or None if there isn't one.
-    """
-    supported_versions = PyTorch.get_supported_versions()
-    for spec in conda_dependencies.conda_packages:
-        components = spec.split("=")
-        if len(components) == 2 and components[0] == "pytorch":
-            version = components[1]
-            for supported in supported_versions:
-                if version.startswith(supported) or supported.startswith(version):
-                    return supported
-    return None
 
 @dataclass
 class SubmitForInferenceConfig:
@@ -125,35 +33,6 @@ class SubmitForInferenceConfig:
     model_id: str
     image_data: bytes
     experiment_name: str
-
-
-def download_files_from_model(model_sas_urls: Dict[str, str], base_name: str, dir_path: Path) -> List[Path]:
-    """
-    Identifies all the files in an AzureML model that have a given file name (ignoring path), and downloads them
-    to a folder.
-    :param model_sas_urls: The files making up the model, as a mapping from file name to a URL with
-    an SAS token.
-    :param base_name: The file name of the files to download.
-    :param dir_path: The folder into which the files will be written. All downloaded files will keep the relative
-    path that they also have in the model.
-    :return: a list of the files that were downloaded.
-    """
-    downloaded: List[Path] = []
-    for path, url in model_sas_urls.items():
-        if Path(path).name == base_name:
-            target_path = dir_path / path
-            target_path.parent.mkdir(exist_ok=True, parents=True)
-            target_path.write_bytes(requests.get(url, allow_redirects=True).content)
-            # Remove additional information from the URL to make it more legible
-            index = url.find("?")
-            if index > 0:
-                url = url[:index]
-            logging.info(f"Downloaded {path} from {url}")
-            downloaded.append(target_path)
-    if not downloaded:
-        logging.warning(f"No file(s) with name '{base_name}' were found in the model!")
-    return downloaded
-
 
 def create_run_config(azure_config: AzureConfig,
                       source_config: SourceConfig,
@@ -214,6 +93,9 @@ def submit_for_inference(args: SubmitForInferenceConfig, workspace: Workspace, a
     # Retrieve the name of the Python environment that the training run used. This environment should have been
     # registered. If no such environment exists, it will be re-create from the Conda files provided.
     python_environment_name = model.tags.get(PYTHON_ENVIRONMENT_NAME, "")
+    if python_environment_name == "":
+        raise ValueError(f"Model ID: {model_id} does not contain an environment tag {PYTHON_ENVIRONMENT_NAME}")
+
     # Copy the scoring script from the repository. This will start the model download from Azure, and invoke the
     # scoring script.
     entry_script = source_directory_path / Path(RUN_SCORING_SCRIPT).name
