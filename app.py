@@ -36,6 +36,7 @@ formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(messag
 handler.setFormatter(formatter)
 root.addHandler(handler)
 
+
 # HTTP REST status codes.
 class HTTP_STATUS_CODE(Enum):
     OK = 200
@@ -55,12 +56,12 @@ ERROR_MESSAGES: Dict[HTTP_STATUS_CODE, Any] = {
         'title': 'InvalidInput'
     },
     HTTP_STATUS_CODE.UNAUTHORIZED: {
-        'detail': 'Server failed to authenticate the request. ' \
+        'detail': 'Server failed to authenticate the request. '
                   f'Make sure the value of the {API_AUTH_SECRET_HEADER_NAME} header is populated.',
         'title': 'NoAuthenticationInformation'
     },
     HTTP_STATUS_CODE.FORBIDDEN: {
-        'detail': 'Server failed to authenticate the request. ' \
+        'detail': 'Server failed to authenticate the request. '
                   f'Make sure the value of the {API_AUTH_SECRET_HEADER_NAME} header is correct.',
         'title': 'AuthenticationFailed'
     },
@@ -101,7 +102,6 @@ def make_error_response(error_code: HTTP_STATUS_CODE, extra_details: Optional[ER
 def is_authenticated_request(req: Request) -> Optional[Response]:
     """
     Check request is authenticated.
-    
     If API_AUTH_SECRET_HEADER_NAME is not in request headers then return 401.
     If API_AUTH_SECRET_HEADER_NAME is in request headers but incorrect then return 403.
     Else return none.
@@ -133,7 +133,8 @@ def start_model(model_id: str, workspace: Workspace, azure_config: AzureConfig) 
     try:
         image_data: bytes = request.stream.read()
         logging.info(f'Starting {model_id}')
-        config = SubmitForInferenceConfig(model_id=model_id, image_data=image_data)
+        config = SubmitForInferenceConfig(model_id=model_id, image_data=image_data,
+                                          experiment_name=azure_config.experiment_name)
         run_id = submit_for_inference(config, workspace, azure_config)
         response = make_response(run_id, HTTP_STATUS_CODE.CREATED.value)
         response.headers.set('Content-Type', 'text/plain')
@@ -191,7 +192,7 @@ def download_result(run_id: str, workspace: Workspace) -> Response:
         response.headers.set('Content-Type', 'application/zip')
         return response
     except ServiceException as error:
-        if error.message == '(UserError) Resource not found':
+        if error.status_code == 404:
             return make_error_response(HTTP_STATUS_CODE.NOT_FOUND,
                                        ERROR_EXTRA_DETAILS.INVALID_RUN_ID)
         logging.error(error)

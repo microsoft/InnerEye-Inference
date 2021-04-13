@@ -21,9 +21,7 @@ class AzureConfig:
     cluster: str  # The name of the GPU cluster inside the AzureML workspace, that should execute the job.
     experiment_name: str
     service_principal_secret: str
-    pip_extra_index_url: Optional[str] = None  # An additional URL where PIP packages should be loaded from.
     _workspace: Optional[Workspace] = None  # "The cached workspace object
-    docker_shm_size: str = "440g"  # The shared memory in the docker image for the AzureML VMs.
 
     @staticmethod
     def is_offline_run_context(run_context: Run) -> bool:

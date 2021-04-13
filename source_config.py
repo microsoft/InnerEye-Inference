@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional, Dict, List
 
@@ -11,8 +11,5 @@ class SourceConfig:
     """
     root_folder: Path
     entry_script: Path
-    conda_dependencies_files: List[Path]
-    script_params: Optional[Dict[str, str]] = None
-    upload_timeout_seconds: int = 36000
-    environment_variables: Optional[Dict[str, str]] = None
+    script_params: List[str] = field(default_factory=list)
 
