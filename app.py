@@ -192,7 +192,7 @@ def download_result(run_id: str, workspace: Workspace) -> Response:
         response.headers.set('Content-Type', 'application/zip')
         return response
     except ServiceException as error:
-        if error.message == '(UserError) Resource not found':
+        if error.status_code == 404:
             return make_error_response(HTTP_STATUS_CODE.NOT_FOUND,
                                        ERROR_EXTRA_DETAILS.INVALID_RUN_ID)
         logging.error(error)
