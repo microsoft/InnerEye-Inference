@@ -81,10 +81,20 @@ def run() -> None:
     if not score_script.exists():
         raise ValueError(f"The specified entry script {score_args[0]} does not exist in {model_folder}")
     print(f"Starting Python with these arguments: {' '.join(score_args)}")
-    code, stdout = spawn_and_monitor_subprocess(process=sys.executable, args=score_args, env=env)
+    code, stdout = 0, ""
+    try:
+        code, stdout = spawn_and_monitor_subprocess(process=sys.executable, args=score_args, env=env)
+    finally:
+        if len(unknown_args) > 2
+            data_folder = unknown_args[1]
+            image_files = unknown_args[2]
+            image_path = Path(data_folder) / image_files 
+            image_path.unlink(missing_ok=True)
     if code != 0:
         print(f"Python terminated with exit code {code}. Stdout: {os.linesep.join(stdout)}")
     sys.exit(code)
+
+
 
 
 if __name__ == '__main__':

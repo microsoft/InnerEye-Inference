@@ -91,9 +91,6 @@ def submit_for_inference(args: SubmitForInferenceConfig, workspace: Workspace, a
     image_folder.mkdir(parents=True, exist_ok=True)
     image_path = image_folder / "imagedata.zip"
     image_path.write_bytes(args.image_data)
-    default_datastore = workspace.get_default_datastore()
-    image_data_reference = default_datastore.upload(image_path, overwrite=True, show_progress=False)
-    image_path.unlink(missing_ok=True)
 
     # Retrieve the name of the Python environment that the training run used. This environment should have been
     # registered. If no such environment exists, it will be re-create from the Conda files provided.
