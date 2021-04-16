@@ -81,7 +81,7 @@ def run() -> None:
     if not score_script.exists():
         raise ValueError(f"The specified entry script {score_args[0]} does not exist in {model_folder}")
     print(f"Starting Python with these arguments: {' '.join(score_args)}")
-    code, stdout = 0, ""
+    code, stdout = -1, "default stdout message"
     try:
         code, stdout = spawn_and_monitor_subprocess(process=sys.executable, args=score_args, env=env)
     finally:
