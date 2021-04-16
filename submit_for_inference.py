@@ -82,13 +82,18 @@ def submit_for_inference(args: SubmitForInferenceConfig, workspace: Workspace, a
     model = Model(workspace=workspace, id=args.model_id)
     model_id = model.id
     logging.info(f"Identified model {model_id}")
+
     source_directory = tempfile.TemporaryDirectory()
     source_directory_path = Path(source_directory.name)
     logging.info(f"Building inference run submission in {source_directory_path}")
+
     image_folder = source_directory_path / DEFAULT_DATA_FOLDER
     image_folder.mkdir(parents=True, exist_ok=True)
     image_path = image_folder / "imagedata.zip"
     image_path.write_bytes(args.image_data)
+    default_datastore = workspace.get_default_datastore()
+    image_data_reference = default_datastore.upload(image_path, overwrite=True, show_progress=False)
+    image_path.unlink(missing_ok=True)
 
     # Retrieve the name of the Python environment that the training run used. This environment should have been
     # registered. If no such environment exists, it will be re-create from the Conda files provided.
