@@ -85,7 +85,7 @@ def run() -> None:
     try:
         code, stdout = spawn_and_monitor_subprocess(process=sys.executable, args=score_args, env=env)
     finally:
-        if len(unknown_args) > 2
+        if len(unknown_args) > 2:
             data_folder = unknown_args[1]
             image_files = unknown_args[2]
             image_path = Path(data_folder) / image_files 
