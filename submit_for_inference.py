@@ -7,6 +7,7 @@ import logging
 import os
 import shutil
 import tempfile
+import uuid
 from pathlib import Path
 
 from attr import dataclass
@@ -24,6 +25,7 @@ SCORE_SCRIPT = "score.py"
 RUN_SCORING_SCRIPT = "download_model_and_run_scoring.py"
 # The property in the model registry that holds the name of the Python environment
 PYTHON_ENVIRONMENT_NAME = "python_environment_name"
+IMAGEDATA_FILE_NAME = "imagedata.zip"
 
 @dataclass
 class SubmitForInferenceConfig:
@@ -90,13 +92,14 @@ def submit_for_inference(args: SubmitForInferenceConfig, workspace: Workspace, a
 
     image_folder = source_directory_path / DEFAULT_DATA_FOLDER
     image_folder.mkdir(parents=True, exist_ok=True)
-    image_path = image_folder / "imagedata.zip"
+    image_path = image_folder / IMAGEDATA_FILE_NAME
     image_path.write_bytes(args.image_data)
 
     default_datastore = workspace.get_default_datastore()
-    image_data_reference = default_datastore.upload_files(
+    target_path = f"temp-image-store/{str(uuid.uuid4())}"
+    default_datastore.upload_files(
         files=[str(image_path)],
-        target_path="temp-image-store",
+        target_path=target_path,
         overwrite=False,
         show_progress=False)
     image_path.unlink()
@@ -118,6 +121,7 @@ def submit_for_inference(args: SubmitForInferenceConfig, workspace: Workspace, a
         entry_script=entry_script,
         script_params=["--model-folder", ".",
                        "--model-id", model_id,
+                       "--datastore-image-path", f"{target_path}",
                        SCORE_SCRIPT,
                        # The data folder must be relative to the root folder of the AzureML job. test_image_files
                        # is then just the file relative to the data_folder
