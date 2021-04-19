@@ -34,6 +34,7 @@ class SubmitForInferenceConfig:
     image_data: bytes
     experiment_name: str
 
+
 def create_run_config(azure_config: AzureConfig,
                       source_config: SourceConfig,
                       environment_name: str) -> ScriptRunConfig:
@@ -92,6 +93,14 @@ def submit_for_inference(args: SubmitForInferenceConfig, workspace: Workspace, a
     image_path = image_folder / "imagedata.zip"
     image_path.write_bytes(args.image_data)
 
+    default_datastore = workspace.get_default_datastore()
+    image_data_reference = default_datastore.upload_files(
+        files=[str(image_path)],
+        target_path="temp-image-store",
+        overwrite=False,
+        show_progress=False)
+    image_path.unlink()
+  
     # Retrieve the name of the Python environment that the training run used. This environment should have been
     # registered. If no such environment exists, it will be re-create from the Conda files provided.
     python_environment_name = model.tags.get(PYTHON_ENVIRONMENT_NAME, "")
