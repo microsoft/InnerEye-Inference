@@ -8,7 +8,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Any
 
 from azureml.core import Model, Run
 
@@ -39,6 +39,18 @@ def spawn_and_monitor_subprocess(process: str, args: List[str], env: Dict[str, s
     return p.wait(), stdout_lines
 
 
+def get_unknown_arg_value(unknown_args: List[str], option: str) -> Any:
+    """
+    Helper function to return the value of an option in the unparsed 'unknown args' of a parameter list
+    :param unknown_args: the unparsed 'unknown args' list
+    :param option: the option whose value we want
+    :return: the value of the option
+    """
+    if option in unknown_args:
+        index_of_option = unknown_args.index(option)
+        return unknown_args[index_of_option + 1]
+
+
 def run() -> None:
     """
     Downloads a model from AzureML, and starts the score script (usually score.py) in the root folder of the model.
@@ -58,7 +70,9 @@ def run() -> None:
     # can't be a clash of names with arguments that are passed through to score.py
     parser.add_argument('--model-folder', dest='model_folder', action='store', type=str)
     parser.add_argument('--model-id', dest='model_id', action='store', type=str)
+    parser.add_argument('--datastore-image-path', dest='datastore_image_path', action='store', type=str)
     known_args, unknown_args = parser.parse_known_args()
+
     model_folder = known_args.model_folder or "."
     if known_args.model_id:
         current_run = Run.get_context()
@@ -69,15 +83,38 @@ def run() -> None:
         model = Model(workspace=workspace, id=known_args.model_id)
         # Download the model from AzureML into a sub-folder of model_folder
         model_folder = str(Path(model.download(model_folder)).absolute())
+    
+        default_datastore = workspace.get_default_datastore()
+        data_folder = get_unknown_arg_value(unknown_args, "--data_folder")
+        image_files_zip = get_unknown_arg_value(unknown_args, "--image_files")
+        print(f"data_folder = {data_folder}")
+        print(f"image_files_zip = {image_files_zip}")
+        print(f"known_args.datastore_image_path = {known_args.datastore_image_path}")
+        print(f"known_args = {known_args}")
+        print(f"unknown_args = {unknown_args}")
+        default_datastore.download(
+            target_path=data_folder, 
+            prefix=known_args.datastore_image_path, 
+            overwrite=False, 
+            show_progress=False)
+        downloaded_image_path = Path(data_folder)
+        downloaded_image_path = downloaded_image_path / known_args.datastore_image_path
+        downloaded_image_path = downloaded_image_path / image_files_zip
+        print(f"downloaded_image_path = {downloaded_image_path}")
+        downloaded_image_path.rename(Path(data_folder) / image_files_zip)
+        print(os.listdir(data_folder))
+
     env = dict(os.environ.items())
     # Work around https://github.com/pytorch/pytorch/issues/37377
     env['MKL_SERVICE_FORCE_INTEL'] = '1'
     # The model should include all necessary code, hence point the Python path to its root folder.
     env['PYTHONPATH'] = model_folder
+
     if not unknown_args:
         raise ValueError("No arguments specified for starting the scoring script.")
     score_script = Path(model_folder) / unknown_args[0]
     score_args = [str(score_script), *unknown_args[1:]]
+
     if not score_script.exists():
         raise ValueError(f"The specified entry script {score_args[0]} does not exist in {model_folder}")
     print(f"Starting Python with these arguments: {' '.join(score_args)}")
@@ -88,6 +125,7 @@ def run() -> None:
         if len(unknown_args) > 4:
             data_folder = unknown_args[2]
             image_files = unknown_args[4]
+            print(f"image_files = {str(image_files)}")
             image_path = Path(data_folder) / image_files
             print(f"image_path = {str(image_path)}")
             print(f"image_path.exists() = {image_path.exists()}")
