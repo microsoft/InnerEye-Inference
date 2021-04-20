@@ -27,7 +27,6 @@ RUN_SCORING_SCRIPT = "download_model_and_run_scoring.py"
 # The property in the model registry that holds the name of the Python environment
 PYTHON_ENVIRONMENT_NAME = "python_environment_name"
 IMAGEDATA_FILE_NAME = "imagedata.zip"
-IMAGEDATA_PATH_PREFIX = "temp-image-store"
 
 
 @dataclass
@@ -111,7 +110,7 @@ def submit_for_inference(
     image_path.write_bytes(args.image_data)
 
     default_datastore = workspace.get_default_datastore()
-    target_path = f"{IMAGEDATA_PATH_PREFIX}/{str(uuid.uuid4())}"
+    target_path = f"{azure_config.image_data_folder}/{str(uuid.uuid4())}"
     default_datastore.upload_files(
         files=[str(image_path)],
         target_path=target_path,
