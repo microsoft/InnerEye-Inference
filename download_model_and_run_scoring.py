@@ -73,36 +73,42 @@ def run() -> None:
     parser.add_argument('--datastore-image-path', dest='datastore_image_path', action='store', type=str)
     known_args, unknown_args = parser.parse_known_args()
 
+
+    if not known_args.model_id:
+        raise ValueError("No model ID given.")
+
+    current_run = Run.get_context()
+    if not hasattr(current_run, 'experiment'):
+        raise ValueError("The model-id argument can only be used inside AzureML. Please drop the argument, and "
+                            "supply the downloaded model in the model-folder.")
+
+    workspace = current_run.experiment.workspace
+    model = Model(workspace=workspace, id=known_args.model_id)
+    # Download the model from AzureML into a sub-folder of model_folder
     model_folder = known_args.model_folder or "."
-    if known_args.model_id:
-        current_run = Run.get_context()
-        if not hasattr(current_run, 'experiment'):
-            raise ValueError("The model-id argument can only be used inside AzureML. Please drop the argument, and "
-                             "supply the downloaded model in the model-folder.")
-        workspace = current_run.experiment.workspace
-        model = Model(workspace=workspace, id=known_args.model_id)
-        # Download the model from AzureML into a sub-folder of model_folder
-        model_folder = str(Path(model.download(model_folder)).absolute())
-    
-        default_datastore = workspace.get_default_datastore()
-        data_folder = get_unknown_arg_value(unknown_args, "--data_folder")
-        image_files_zip = get_unknown_arg_value(unknown_args, "--image_files")
-        print(f"data_folder = {data_folder}")
-        print(f"image_files_zip = {image_files_zip}")
-        print(f"known_args.datastore_image_path = {known_args.datastore_image_path}")
-        print(f"known_args = {known_args}")
-        print(f"unknown_args = {unknown_args}")
-        default_datastore.download(
-            target_path=data_folder, 
-            prefix=known_args.datastore_image_path, 
-            overwrite=False, 
-            show_progress=False)
-        downloaded_image_path = Path(data_folder)
-        downloaded_image_path = downloaded_image_path / known_args.datastore_image_path
-        downloaded_image_path = downloaded_image_path / image_files_zip
-        print(f"downloaded_image_path = {downloaded_image_path}")
-        downloaded_image_path.rename(Path(data_folder) / image_files_zip)
-        print(os.listdir(data_folder))
+    model_folder = str(Path(model.download(model_folder)).absolute())
+
+    # Download the image data zip from the default datastore
+    default_datastore = workspace.get_default_datastore()
+    data_folder = get_unknown_arg_value(unknown_args, "--data_folder")
+    image_files_zip = get_unknown_arg_value(unknown_args, "--image_files")
+    print(f"data_folder = {data_folder}")
+    print(f"image_files_zip = {image_files_zip}")
+    print(f"known_args.datastore_image_path = {known_args.datastore_image_path}")
+    print(f"known_args = {known_args}")
+    print(f"unknown_args = {unknown_args}")
+    default_datastore.download(
+        target_path=data_folder, 
+        prefix=known_args.datastore_image_path, 
+        overwrite=False, 
+        show_progress=False)
+    downloaded_image_path = Path(data_folder)
+    downloaded_image_path = downloaded_image_path / known_args.datastore_image_path
+    downloaded_image_path = downloaded_image_path / image_files_zip
+    print(f"downloaded_image_path = {downloaded_image_path}")
+    image_data_zip_path = Path(data_folder) / image_files_zip
+    downloaded_image_path.rename(image_data_zip_path)
+    print(os.listdir(data_folder))
 
     env = dict(os.environ.items())
     # Work around https://github.com/pytorch/pytorch/issues/37377
@@ -122,15 +128,17 @@ def run() -> None:
     try:
         code, stdout = spawn_and_monitor_subprocess(process=sys.executable, args=score_args, env=env)
     finally:
-        if len(unknown_args) > 4:
-            data_folder = unknown_args[2]
-            image_files = unknown_args[4]
-            print(f"image_files = {str(image_files)}")
-            image_path = Path(data_folder) / image_files
-            print(f"image_path = {str(image_path)}")
-            print(f"image_path.exists() = {image_path.exists()}")
-            image_path.unlink()
-            print(f"image_path.exists() = {image_path.exists()}")
+        # Delete image data zip locally
+        image_data_zip_path.unlink()
+        # Overwrite image data zip in datastore 
+        with image_data_zip_path.open(mode="w") as replacement_file:
+            replacement_file.writelines(['image data deleted'])
+        default_datastore.upload_files(
+            files=[str(image_data_zip_path)],
+            target_path=known_args.datastore_image_path,
+            overwrite=True,
+            show_progress=False)
+        image_data_zip_path.unlink()
     if code != 0:
         print(f"Python terminated with exit code {code}. Stdout: {os.linesep.join(stdout)}")
     sys.exit(code)
