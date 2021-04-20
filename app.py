@@ -135,7 +135,7 @@ def start_model(model_id: str, workspace: Workspace, azure_config: AzureConfig) 
         logging.info(f'Starting {model_id}')
         config = SubmitForInferenceConfig(model_id=model_id, image_data=image_data,
                                           experiment_name=azure_config.experiment_name)
-        run_id = submit_for_inference(config, workspace, azure_config)
+        run_id, _ = submit_for_inference(config, workspace, azure_config)
         response = make_response(run_id, HTTP_STATUS_CODE.CREATED.value)
         response.headers.set('Content-Type', 'text/plain')
         return response
