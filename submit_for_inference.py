@@ -9,6 +9,7 @@ import shutil
 import tempfile
 import uuid
 from pathlib import Path
+from typing import Tuple
 
 from attr import dataclass
 from azureml.core import Experiment, Model, ScriptRunConfig, Environment
@@ -27,6 +28,7 @@ RUN_SCORING_SCRIPT = "download_model_and_run_scoring.py"
 PYTHON_ENVIRONMENT_NAME = "python_environment_name"
 IMAGEDATA_FILE_NAME = "imagedata.zip"
 IMAGEDATA_PATH_PREFIX = "temp-image-store"
+
 
 @dataclass
 class SubmitForInferenceConfig:
@@ -85,13 +87,14 @@ def create_run_config(azure_config: AzureConfig,
 def submit_for_inference(
     args: SubmitForInferenceConfig,
     workspace: Workspace,
-    azure_config: AzureConfig) -> str:
+    azure_config: AzureConfig) -> Tuple[str, str]:
     """
     Create and submit an inference to AzureML, and optionally download the resulting segmentation.
     :param args: configuration, see SubmitForInferenceConfig
     :param workspace: Azure ML workspace.
     :param azure_config: An object with all necessary information for accessing Azure.
-    :return: Azure Run Id (and the target path of the image data zip for unit tests to check)
+    :return: Azure Run Id (and the target path on the datastore, including the uuid, for a unit
+    test to ensure that the image data zip is overwritten after infernece)
     """
     logging.info("Identifying model")
     model = Model(workspace=workspace, id=args.model_id)

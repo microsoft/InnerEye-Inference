@@ -13,6 +13,9 @@ from typing import Dict, List, Tuple, Any
 from azureml.core import Model, Run
 
 
+DELETED_IMAGE_DATA_NOTIFICATION = "image data deleted"
+
+
 def spawn_and_monitor_subprocess(
     process: str,
     args: List[str],
@@ -145,7 +148,7 @@ def run() -> None:
         image_data_zip_path.unlink()
         # Overwrite image data zip in datastore
         with image_data_zip_path.open(mode="w") as replacement_file:
-            replacement_file.writelines(['image data deleted'])
+            replacement_file.writelines([DELETED_IMAGE_DATA_NOTIFICATION])
         default_datastore.upload_files(
             files=[str(image_data_zip_path)],
             target_path=known_args.datastore_image_path,
