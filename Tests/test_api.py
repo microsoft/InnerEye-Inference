@@ -373,18 +373,18 @@ def test_submit_for_inference_image_data_deletion() -> None:
         if run_status in RUNNING_OR_POST_PROCESSING:
             time.sleep(1)
             continue
-        image_datastore = Datastore(workspace, azure_config.datastore_name)
-        with tempfile.TemporaryDirectory() as temp_dir:
-            # pylint: disable=no-member
-            image_datastore.download(
-                target_path=temp_dir,
-                prefix=datastore_image_path,
-                overwrite=False,
-                show_progress=False)
-            # pylint: enable=no-member
-            temp_dir_path = Path(temp_dir)
-            image_data_zip_path = (temp_dir_path / datastore_image_path) / IMAGEDATA_FILE_NAME
-            with image_data_zip_path.open() as image_data_file:
-                first_line = image_data_file.readline().strip()
-                assert first_line == DELETED_IMAGE_DATA_NOTIFICATION
-        return
+        break
+    image_datastore = Datastore(workspace, azure_config.datastore_name)
+    with tempfile.TemporaryDirectory() as temp_dir:
+        # pylint: disable=no-member
+        image_datastore.download(
+            target_path=temp_dir,
+            prefix=datastore_image_path,
+            overwrite=False,
+            show_progress=False)
+        # pylint: enable=no-member
+        temp_dir_path = Path(temp_dir)
+        image_data_zip_path = (temp_dir_path / datastore_image_path) / IMAGEDATA_FILE_NAME
+        with image_data_zip_path.open() as image_data_file:
+            first_line = image_data_file.readline().strip()
+            assert first_line == DELETED_IMAGE_DATA_NOTIFICATION
