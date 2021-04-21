@@ -17,9 +17,9 @@ DELETED_IMAGE_DATA_NOTIFICATION = "image data deleted"
 
 
 def spawn_and_monitor_subprocess(
-    process: str,
-    args: List[str],
-    env: Dict[str, str]) -> Tuple[int, List[str]]:
+        process: str,
+        args: List[str],
+        env: Dict[str, str]) -> Tuple[int, List[str]]:
     """
     Helper function to spawn and monitor subprocesses.
     :param process: The name or path of the process to spawn.

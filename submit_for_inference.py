@@ -84,9 +84,9 @@ def create_run_config(azure_config: AzureConfig,
 
 
 def submit_for_inference(
-    args: SubmitForInferenceConfig,
-    workspace: Workspace,
-    azure_config: AzureConfig) -> Tuple[str, str]:
+        args: SubmitForInferenceConfig,
+        workspace: Workspace,
+        azure_config: AzureConfig) -> Tuple[str, str]:
     """
     Create and submit an inference to AzureML, and optionally download the resulting segmentation.
     :param args: configuration, see SubmitForInferenceConfig
