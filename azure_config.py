@@ -21,7 +21,8 @@ class AzureConfig:
     cluster: str  # The name of the GPU cluster inside the AzureML workspace, that should execute the job.
     experiment_name: str
     service_principal_secret: str
-    image_data_folder: str # The folder name in the default data store for temp image storage.
+    datastore_name: str # The datastore data store for temp image storage.
+    image_data_folder: str # The folder name in the data store for temp image storage.
     _workspace: Optional[Workspace] = None  # "The cached workspace object
     
 

@@ -9,7 +9,7 @@ from injector import singleton, Binder
 from azure_config import AzureConfig
 from configuration_constants import (API_AUTH_SECRET_ENVIRONMENT_VARIABLE, CLUSTER, WORKSPACE_NAME,
                                      EXPERIMENT_NAME, RESOURCE_GROUP, SUBSCRIPTION_ID,
-                                     APPLICATION_ID, TENANT_ID, IMAGE_DATA_FOLDER,
+                                     APPLICATION_ID, TENANT_ID, IMAGE_DATA_FOLDER, DATASTORE_NAME,
                                      AZUREML_SERVICE_PRINCIPAL_SECRET_ENVIRONMENT_VARIABLE)
 
 PROJECT_SECRETS_FILE = Path(__file__).resolve().parent / Path("set_environment.sh")
@@ -65,4 +65,5 @@ def get_azure_config() -> AzureConfig:
                        service_principal_secret=get_environment_variable(
                            AZUREML_SERVICE_PRINCIPAL_SECRET_ENVIRONMENT_VARIABLE),
                        tenant_id=get_environment_variable(TENANT_ID),
+                       datastore_name=get_environment_variable(DATASTORE_NAME),
                        image_data_folder=get_environment_variable(IMAGE_DATA_FOLDER))

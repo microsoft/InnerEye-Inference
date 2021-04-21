@@ -38,6 +38,7 @@ export RESOURCE_GROUP=
 export SUBSCRIPTION_ID=
 export APPLICATION_ID=
 export TENANT_ID=
+export DATASTORE_NAME=
 export IMAGE_DATA_FOLDER=
 ```
 
@@ -62,7 +63,7 @@ If you would like to reproduce the automatic deployment of the service for testi
 
 ## Images
 
-During inference the image data zip file is copied to the IMAGE_DATA_FOLDER in the AzureML workspace's default datastore. At the end of inference the copied image data zip file is overwritten with a simple line of text. At present we cannot delete these. If you would like these overwritten files removed from your datastore you can [add a policy](https://docs.microsoft.com/en-us/azure/storage/blobs/storage-lifecycle-management-concepts?tabs=azure-portal) to delete items from the datastore after a period of time. We recommend 7 days.
+During inference the image data zip file is copied to the IMAGE_DATA_FOLDER in the AzureML workspace's DATASTORE_NAME datastore. At the end of inference the copied image data zip file is overwritten with a simple line of text. At present we cannot delete these. If you would like these overwritten files removed from your datastore you can [add a policy](https://docs.microsoft.com/en-us/azure/storage/blobs/storage-lifecycle-management-concepts?tabs=azure-portal) to delete items from the datastore after a period of time. We recommend 7 days.
 
 ## Help and Bug Reporting
 
