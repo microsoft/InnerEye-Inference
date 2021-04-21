@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any, Optional
 from unittest import mock
 from azureml._restclient.constants import RunStatus
-from azureml.core import Experiment, Model, Workspace
+from azureml.core import Experiment, Model, Workspace, Datastore
 from azureml.exceptions import WebserviceException
 from flask import Response
 from pydicom import dcmread
@@ -373,13 +373,15 @@ def test_submit_for_inference_image_data_deletion() -> None:
         if run_status in RUNNING_OR_POST_PROCESSING:
             time.sleep(1)
             continue
-        default_datastore = workspace.get_default_datastore()
+        image_datastore = Datastore(workspace, azure_config.datastore_name)
         with tempfile.TemporaryDirectory() as temp_dir:
-            default_datastore.download(
+            # pylint: disable=no-member
+            image_datastore.download(
                 target_path=temp_dir,
                 prefix=datastore_image_path,
                 overwrite=False,
                 show_progress=False)
+            # pylint: enable=no-member
             temp_dir_path = Path(temp_dir)
             image_data_zip_path = (temp_dir_path / datastore_image_path) / IMAGEDATA_FILE_NAME
             with image_data_zip_path.open() as image_data_file:

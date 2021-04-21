@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 from typing import Dict, List, Tuple, Any
 
-from azureml.core import Model, Run
+from azureml.core import Model, Run, Datastore
 
 
 DELETED_IMAGE_DATA_NOTIFICATION = "image data deleted"
@@ -81,8 +81,21 @@ def run() -> None:
     parser = argparse.ArgumentParser(description='Execute code inside of an AzureML model')
     # Use argument names with dashes here. The rest of the codebase uses _ as the separator, meaning
     # that there can't be a clash of names with arguments that are passed through to score.py
-    parser.add_argument('--model-folder', dest='model_folder', action='store', type=str)
-    parser.add_argument('--model-id', dest='model_id', action='store', type=str)
+    parser.add_argument(
+        '--model-folder',
+        dest='model_folder',
+        action='store',
+        type=str)
+    parser.add_argument(
+        '--model-id',
+        dest='model_id',
+        action='store',
+        type=str)
+    parser.add_argument(
+        '--datastore-name',
+        dest='datastore_name',
+        action='store',
+        type=str)
     parser.add_argument(
         '--datastore-image-path',
         dest='datastore_image_path',
@@ -106,14 +119,16 @@ def run() -> None:
     model_folder = str(Path(model.download(model_folder)).absolute())
 
     # Download the image data zip from the default datastore
-    default_datastore = workspace.get_default_datastore()
     data_folder = get_unknown_arg_value(unknown_args, "--data_folder")
     image_files_zip = get_unknown_arg_value(unknown_args, "--image_files")
-    default_datastore.download(
+    image_datastore = Datastore(workspace, known_args.datastore_name)
+    # pylint: disable=no-member
+    image_datastore.download(
         target_path=data_folder,
         prefix=known_args.datastore_image_path,
         overwrite=False,
         show_progress=False)
+    # pylint: enable=no-member
     downloaded_image_path = Path(data_folder)
     downloaded_image_path /= known_args.datastore_image_path
     #downloaded_image_path = downloaded_image_path / known_args.datastore_image_path
@@ -149,11 +164,13 @@ def run() -> None:
         # Overwrite image data zip in datastore
         with image_data_zip_path.open(mode="w") as replacement_file:
             replacement_file.writelines([DELETED_IMAGE_DATA_NOTIFICATION])
-        default_datastore.upload_files(
+        # pylint: disable=no-member
+        image_datastore.upload_files(
             files=[str(image_data_zip_path)],
             target_path=known_args.datastore_image_path,
             overwrite=True,
             show_progress=False)
+        # pylint: enable=no-member
         image_data_zip_path.unlink()
     if code != 0:
         print(f"Python terminated with exit code {code}. Stdout: {os.linesep.join(stdout)}")

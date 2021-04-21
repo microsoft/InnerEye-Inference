@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Tuple
 
 from attr import dataclass
-from azureml.core import Experiment, Model, ScriptRunConfig, Environment
+from azureml.core import Experiment, Model, ScriptRunConfig, Environment, Datastore
 from azureml.core.runconfig import RunConfiguration
 from azureml.core.workspace import WORKSPACE_DEFAULT_BLOB_STORE_NAME, Workspace
 
@@ -109,13 +109,15 @@ def submit_for_inference(
     image_path = image_folder / IMAGEDATA_FILE_NAME
     image_path.write_bytes(args.image_data)
 
-    default_datastore = workspace.get_default_datastore()
+    image_datastore = Datastore(workspace, azure_config.datastore_name)
     target_path = f"{azure_config.image_data_folder}/{str(uuid.uuid4())}"
-    default_datastore.upload_files(
+    # pylint: disable=no-member
+    image_datastore.upload_files(
         files=[str(image_path)],
         target_path=target_path,
         overwrite=False,
         show_progress=False)
+    # pylint: enable=no-member
     image_path.unlink()
 
     # Retrieve the name of the Python environment that the training run used. This environment
@@ -137,6 +139,7 @@ def submit_for_inference(
         entry_script=entry_script,
         script_params=["--model-folder", ".",
                        "--model-id", model_id,
+                       "--datastore-name", azure_config.datastore_name,
                        "--datastore-image-path", f"{target_path}",
                        SCORE_SCRIPT,
                        # The data folder must be relative to the root folder of the AzureML job.
