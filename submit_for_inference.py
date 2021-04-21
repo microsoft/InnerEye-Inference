@@ -111,13 +111,11 @@ def submit_for_inference(
 
     image_datastore = Datastore(workspace, azure_config.datastore_name)
     target_path = f"{azure_config.image_data_folder}/{str(uuid.uuid4())}"
-    # pylint: disable=no-member
     image_datastore.upload_files(
         files=[str(image_path)],
         target_path=target_path,
         overwrite=False,
         show_progress=False)
-    # pylint: enable=no-member
     image_path.unlink()
 
     # Retrieve the name of the Python environment that the training run used. This environment

@@ -122,16 +122,13 @@ def run() -> None:
     data_folder = get_unknown_arg_value(unknown_args, "--data_folder")
     image_files_zip = get_unknown_arg_value(unknown_args, "--image_files")
     image_datastore = Datastore(workspace, known_args.datastore_name)
-    # pylint: disable=no-member
     image_datastore.download(
         target_path=data_folder,
         prefix=known_args.datastore_image_path,
         overwrite=False,
         show_progress=False)
-    # pylint: enable=no-member
     downloaded_image_path = Path(data_folder)
     downloaded_image_path /= known_args.datastore_image_path
-    #downloaded_image_path = downloaded_image_path / known_args.datastore_image_path
     downloaded_image_path = downloaded_image_path / image_files_zip
     print(f"downloaded_image_path = {downloaded_image_path}")
     image_data_zip_path = Path(data_folder) / image_files_zip
@@ -164,13 +161,11 @@ def run() -> None:
         # Overwrite image data zip in datastore
         with image_data_zip_path.open(mode="w") as replacement_file:
             replacement_file.writelines([DELETED_IMAGE_DATA_NOTIFICATION])
-        # pylint: disable=no-member
         image_datastore.upload_files(
             files=[str(image_data_zip_path)],
             target_path=known_args.datastore_image_path,
             overwrite=True,
             show_progress=False)
-        # pylint: enable=no-member
         image_data_zip_path.unlink()
     if code != 0:
         print(f"Python terminated with exit code {code}. Stdout: {os.linesep.join(stdout)}")
