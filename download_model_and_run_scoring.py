@@ -129,7 +129,7 @@ def run() -> None:
         show_progress=False)
     downloaded_image_path = Path(data_folder)
     downloaded_image_path /= known_args.datastore_image_path
-    downloaded_image_path = downloaded_image_path / image_files_zip
+    downloaded_image_path /= image_files_zip
     print(f"downloaded_image_path = {downloaded_image_path}")
     image_data_zip_path = Path(data_folder) / image_files_zip
     downloaded_image_path.rename(image_data_zip_path)
