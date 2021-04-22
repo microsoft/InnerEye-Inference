@@ -17,18 +17,10 @@ from azureml.exceptions import WebserviceException
 from flask import Response
 from pydicom import dcmread
 
-from app import (ERROR_EXTRA_DETAILS,
-                 HTTP_STATUS_CODE,
-                 RUNNING_OR_POST_PROCESSING,
-                 app)
-from configure import (API_AUTH_SECRET,
-                       API_AUTH_SECRET_HEADER_NAME,
-                       get_azure_config)
+from app import ERROR_EXTRA_DETAILS, HTTP_STATUS_CODE, RUNNING_OR_POST_PROCESSING, app
+from configure import API_AUTH_SECRET, API_AUTH_SECRET_HEADER_NAME, get_azure_config
 from download_model_and_run_scoring import DELETED_IMAGE_DATA_NOTIFICATION
-from submit_for_inference import (DEFAULT_RESULT_IMAGE_NAME,
-                                  IMAGEDATA_FILE_NAME,
-                                  SubmitForInferenceConfig,
-                                  submit_for_inference)
+from submit_for_inference import DEFAULT_RESULT_IMAGE_NAME, IMAGEDATA_FILE_NAME, SubmitForInferenceConfig, submit_for_inference
 
 # Timeout, in seconds, for Azure runs, 20 minutes.
 TIMEOUT_IN_SECONDS = 20 * 60
