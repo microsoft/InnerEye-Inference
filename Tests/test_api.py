@@ -358,14 +358,8 @@ def test_submit_for_inference_image_data_deletion() -> None:
         image_data=image_data,
         experiment_name=azure_config.experiment_name)
     run_id, datastore_image_path = submit_for_inference(config, workspace, azure_config)
-
-    while True:
-        run = workspace.get_run(run_id)
-        run_status = run.status
-        if run_status in RUNNING_OR_POST_PROCESSING:
-            time.sleep(1)
-            continue
-        break
+    run = workspace.get_run(run_id)
+    run.wait_for_completion()
     image_datastore = Datastore(workspace, azure_config.datastore_name)
     with tempfile.TemporaryDirectory() as temp_dir:
         image_datastore.download(
