@@ -374,7 +374,7 @@ def test_submit_for_inference_image_data_deletion() -> None:
             overwrite=False,
             show_progress=False)
         temp_dir_path = Path(temp_dir)
-        image_data_zip_path = (temp_dir_path / datastore_image_path) / IMAGEDATA_FILE_NAME
+        image_data_zip_path = temp_dir_path / datastore_image_path / IMAGEDATA_FILE_NAME
         with image_data_zip_path.open() as image_data_file:
             first_line = image_data_file.readline().strip()
             assert first_line == DELETED_IMAGE_DATA_NOTIFICATION
