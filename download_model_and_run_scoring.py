@@ -157,8 +157,7 @@ def run() -> None:
         # Delete image data zip locally
         image_data_zip_path.unlink()
         # Overwrite image data zip in datastore
-        with image_data_zip_path.open(mode="w") as replacement_file:
-            replacement_file.writelines([DELETED_IMAGE_DATA_NOTIFICATION])
+        image_data_zip_path.write_text(DELETED_IMAGE_DATA_NOTIFICATION)
         image_datastore.upload_files(
             files=[str(image_data_zip_path)],
             target_path=known_args.datastore_image_path,
