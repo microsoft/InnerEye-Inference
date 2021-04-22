@@ -74,40 +74,29 @@ def run() -> None:
     if not known_args.datastore_image_path:
         raise ValueError("No datastore image path given.")        
 
-    print(f'known_args.model_id = {known_args.model_id}')
-    print(f'known_args.script_name = {known_args.script_name}')
-    print(f'known_args.datastore_name = {known_args.datastore_name}')
-    print(f'known_args.datastore_image_path = {known_args.datastore_image_path}')
-
     current_run = Run.get_context()
     if not hasattr(current_run, 'experiment'):
         raise ValueError("This script must run in an AzureML experiment")
 
     here = Path.cwd().absolute()
-    print(f'here = {str(here)}')
 
     workspace = current_run.experiment.workspace
     model = Model(workspace=workspace, id=known_args.model_id)
 
     # Download the model from AzureML
     model_path = Path(model.download(here)).absolute()
-    print(f'model_path = {str(model_path)}')
 
     # Download the image data zip from the named datastore where it was copied by submit_for_infernece
     # We copy it to a data stroe, rather than using the AzureML experiment's snapshot, so that we can
     # overwrite it after the inference and thus not retain image data.
     image_datastore = Datastore(workspace, known_args.datastore_name)
     prefix = str(Path(known_args.datastore_image_path).parent)
-    print(f'prefix = {str(prefix)}')
     image_datastore.download(
         target_path=here,
         prefix=prefix,
         overwrite=False,
         show_progress=False)
     downloaded_image_path = here / known_args.datastore_image_path
-    print(f'os.listdir(downloaded_image_path.parent) = {os.listdir(downloaded_image_path.parent)}')
-    print(f'downloaded_image_path = {str(downloaded_image_path)}')
-    print(f'downloaded_image_path.exists() = {downloaded_image_path.exists()}')
 
     env = dict(os.environ.items())
     # Work around https://github.com/pytorch/pytorch/issues/37377
