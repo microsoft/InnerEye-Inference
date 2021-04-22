@@ -135,18 +135,10 @@ def submit_for_inference(
     source_config = SourceConfig(
         root_folder=source_directory_path,
         entry_script=entry_script,
-        script_params=["--model-folder", ".",
-                       "--model-id", model_id,
+        script_params=["--model-id", model_id,
+                       "--script-name", SCORE_SCRIPT,
                        "--datastore-name", azure_config.datastore_name,
-                       "--datastore-image-path", f"{target_path}",
-                       SCORE_SCRIPT,
-                       # The data folder must be relative to the root folder of the AzureML job.
-                       # test_image_files is then just the file relative to the data_folder
-                       "--data_folder", image_path.parent.name,
-                       "--image_files", image_path.name,
-                       "--use_dicom", "True",
-                       "--model_id", model_id],
-    )
+                       "--datastore-image-path", str(Path(target_path) / IMAGEDATA_FILE_NAME)])
     run_config = create_run_config(
         azure_config,
         source_config,
