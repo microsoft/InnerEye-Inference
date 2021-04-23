@@ -21,11 +21,8 @@ def spawn_and_monitor_subprocess(process: str, args: List[str], env: Dict[str, s
     Helper function to spawn and monitor subprocesses.
     :param process: The name or path of the process to spawn.
     :param args: The args to the process.
-    :param env: The environment variables for the process (default is the environment variables of
-    the parent).
-    :return: Return code after the process has finished, and the list of lines that were written
-    to stdout by the
-    subprocess.
+    :param env: The environment variables for the process (default is the environment variables of the parent).
+    :return: Return code after the process has finished, and the list of lines that were written to stdout by the subprocess.
     """
     p = subprocess.Popen(
         [process] + args,
@@ -78,12 +75,11 @@ def run() -> None:
     if not hasattr(current_run, 'experiment'):
         raise ValueError("This script must run in an AzureML experiment")
 
-    here = Path.cwd().absolute()
-
     workspace = current_run.experiment.workspace
     model = Model(workspace=workspace, id=known_args.model_id)
 
     # Download the model from AzureML
+    here = Path.cwd().absolute()
     model_path = Path(model.download(here)).absolute()
 
     # Download the image data zip from the named datastore where it was copied by submit_for_infernece
@@ -91,11 +87,7 @@ def run() -> None:
     # overwrite it after the inference and thus not retain image data.
     image_datastore = Datastore(workspace, known_args.datastore_name)
     prefix = str(Path(known_args.datastore_image_path).parent)
-    image_datastore.download(
-        target_path=here,
-        prefix=prefix,
-        overwrite=False,
-        show_progress=False)
+    image_datastore.download(target_path=here, prefix=prefix, overwrite=False, show_progress=False)
     downloaded_image_path = here / known_args.datastore_image_path
 
     env = dict(os.environ.items())
@@ -127,11 +119,7 @@ def run() -> None:
         # overwritten image data zip files can be erased, we recommend using a blobstore lifecylce
         # management policy to delete them after a period of time, e.g. seven days.
         downloaded_image_path.write_text(DELETED_IMAGE_DATA_NOTIFICATION)
-        image_datastore.upload_files(
-            files=[str(downloaded_image_path)],
-            target_path=prefix,
-            overwrite=True,
-            show_progress=False)
+        image_datastore.upload_files(files=[str(downloaded_image_path)], target_path=prefix, overwrite=True, show_progress=False)
         # Delete the overwritten image data zip locally
         downloaded_image_path.unlink()
     if code != 0:

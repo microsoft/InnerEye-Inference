@@ -244,10 +244,7 @@ def create_zipped_dicom_series() -> bytes:
     """
     with tempfile.TemporaryDirectory() as temp_dir:
         zipped_dicom_file = Path(temp_dir) / "temp.zip"
-        shutil.make_archive(
-            str(zipped_dicom_file.with_suffix('')),
-            'zip',
-            str(TestDicomVolumeLocation))
+        shutil.make_archive(str(zipped_dicom_file.with_suffix('')), 'zip', str(TestDicomVolumeLocation))
         with open(zipped_dicom_file, 'rb') as f:
             return f.read()
 
