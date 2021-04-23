@@ -74,7 +74,7 @@ def run() -> None:
     model_path = Path(model.download(here)).absolute()
 
     # Download the image data zip from the named datastore where it was copied by submit_for_infernece
-    # We copy it to a data stroe, rather than using the AzureML experiment's snapshot, so that we can
+    # We copy it to a data store, rather than using the AzureML experiment's snapshot, so that we can
     # overwrite it after the inference and thus not retain image data.
     image_datastore = Datastore(workspace, known_args.datastore_name)
     prefix = str(Path(known_args.datastore_image_path).parent)
@@ -87,7 +87,7 @@ def run() -> None:
     # The model should include all necessary code, hence point the Python path to its root folder.
     env['PYTHONPATH'] = str(model_path)
 
-    score_script = Path(model_path) / known_args.script_name
+    score_script = model_path / known_args.script_name
     score_args = [
         str(score_script),
         '--data_folder', str(here / Path(known_args.datastore_image_path).parent),
