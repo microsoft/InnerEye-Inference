@@ -3,24 +3,24 @@
 #  Licensed under the MIT License (MIT). See LICENSE in the repo root for license information.
 #  ------------------------------------------------------------------------------------------
 
-from pathlib import Path
 import random
 import shutil
 import tempfile
 import time
+import zipfile
+from pathlib import Path
 from typing import Any, Optional
 from unittest import mock
-import zipfile
-
 from azureml._restclient.constants import RunStatus
-from azureml.core import Experiment, Model, Workspace
+from azureml.core import Experiment, Model, Workspace, Datastore
 from azureml.exceptions import WebserviceException
 from flask import Response
 from pydicom import dcmread
 
-from app import app, HTTP_STATUS_CODE, ERROR_EXTRA_DETAILS
-from configure import API_AUTH_SECRET, API_AUTH_SECRET_HEADER_NAME
-from submit_for_inference import DEFAULT_RESULT_IMAGE_NAME
+from app import ERROR_EXTRA_DETAILS, HTTP_STATUS_CODE, RUNNING_OR_POST_PROCESSING, app
+from configure import API_AUTH_SECRET, API_AUTH_SECRET_HEADER_NAME, get_azure_config
+from download_model_and_run_scoring import DELETED_IMAGE_DATA_NOTIFICATION
+from submit_for_inference import DEFAULT_RESULT_IMAGE_NAME, IMAGEDATA_FILE_NAME, SubmitForInferenceConfig, submit_for_inference
 
 # Timeout, in seconds, for Azure runs, 20 minutes.
 TIMEOUT_IN_SECONDS = 20 * 60
@@ -31,6 +31,8 @@ THIS_DIR: Path = Path(__file__).parent.resolve()
 TEST_DATA_DIR: Path = THIS_DIR / "TestData"
 # Test reference series.
 TestDicomVolumeLocation: Path = TEST_DATA_DIR / "HN"
+
+PASSTHROUGH_MODEL_ID = "PassThroughModel:4"
 
 
 def assert_response_error_type(response: Response, status_code: HTTP_STATUS_CODE,
@@ -142,7 +144,7 @@ def test_model_start_authenticated_valid_model_id() -> None:
     # Patch the method Experiment.submit to prevent the AzureML experiment actually running.
     with mock.patch.object(Experiment, 'submit', return_value=run_mock):
         with app.test_client() as client:
-            response = client.post("/v1/model/start/PassThroughModel:4",
+            response = client.post(f"/v1/model/start/{PASSTHROUGH_MODEL_ID}",
                                    headers={API_AUTH_SECRET_HEADER_NAME: API_AUTH_SECRET})
             assert response.status_code == HTTP_STATUS_CODE.CREATED.value
             assert response.content_type == 'text/plain'
@@ -280,12 +282,12 @@ def submit_for_inference_and_wait(model_id: str, data: bytes) -> Any:
 
 def test_submit_for_inference_end_to_end() -> None:
     """
-    Test that submitting a zipped DICOM series to model PassThroughModel:4 returns
+    Test that submitting a zipped DICOM series to model PASSTHROUGH_MODEL_ID returns
     the expected DICOM-RT format.
     """
     image_data = create_zipped_dicom_series()
     assert len(image_data) > 0
-    response = submit_for_inference_and_wait("PassThroughModel:4", image_data)
+    response = submit_for_inference_and_wait(PASSTHROUGH_MODEL_ID, image_data)
     assert response.content_type == 'application/zip'
     assert response.status_code == HTTP_STATUS_CODE.OK.value
     # Create a scratch directory
@@ -313,7 +315,7 @@ def test_submit_for_inference_end_to_end() -> None:
         # Check the modality
         assert ds.Modality == 'RTSTRUCT'
         assert ds.Manufacturer == 'Default_Manufacturer'
-        assert ds.SoftwareVersions == 'PassThroughModel:4'
+        assert ds.SoftwareVersions == PASSTHROUGH_MODEL_ID
         # Check the structure names
         expected_structure_names = ["SpinalCord", "Lung_R", "Lung_L", "Heart", "Esophagus"]
         assert len(ds.StructureSetROISequence) == len(expected_structure_names)
@@ -325,6 +327,7 @@ def test_submit_for_inference_end_to_end() -> None:
         assert len(ds.ROIContourSequence) == len(expected_structure_names)
         for i, item in enumerate(expected_structure_names):
             assert ds.ROIContourSequence[i].ReferencedROINumber == i + 1
+    # Download image data zip, which should now have been overwritten
 
 
 def test_submit_for_inference_bad_image_file() -> None:
@@ -335,6 +338,34 @@ def test_submit_for_inference_bad_image_file() -> None:
     """
     # Get a random 1Kb
     image_data = bytes([random.randint(0, 255) for _ in range(0, 1024)])
-    response = submit_for_inference_and_wait("PassThroughModel:4", image_data)
+    response = submit_for_inference_and_wait(PASSTHROUGH_MODEL_ID, image_data)
     assert_response_error_type(response, HTTP_STATUS_CODE.BAD_REQUEST,
                                ERROR_EXTRA_DETAILS.INVALID_ZIP_FILE)
+
+
+def test_submit_for_inference_image_data_deletion() -> None:
+    """
+    Test that the image data zip is overwritten after the inference runs
+    """
+    image_data = create_zipped_dicom_series()
+    azure_config = get_azure_config()
+    workspace = azure_config.get_workspace()
+    config = SubmitForInferenceConfig(
+        model_id=PASSTHROUGH_MODEL_ID,
+        image_data=image_data,
+        experiment_name=azure_config.experiment_name)
+    run_id, datastore_image_path = submit_for_inference(config, workspace, azure_config)
+    run = workspace.get_run(run_id)
+    run.wait_for_completion()
+    image_datastore = Datastore(workspace, azure_config.datastore_name)
+    with tempfile.TemporaryDirectory() as temp_dir:
+        image_datastore.download(
+            target_path=temp_dir,
+            prefix=datastore_image_path,
+            overwrite=False,
+            show_progress=False)
+        temp_dir_path = Path(temp_dir)
+        image_data_zip_path = temp_dir_path / datastore_image_path / IMAGEDATA_FILE_NAME
+        with image_data_zip_path.open() as image_data_file:
+            first_line = image_data_file.readline().strip()
+            assert first_line == DELETED_IMAGE_DATA_NOTIFICATION

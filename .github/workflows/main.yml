@@ -32,13 +32,15 @@ jobs:
       env:
         CUSTOMCONNSTR_AZUREML_SERVICE_PRINCIPAL_SECRET: ${{ secrets.CUSTOMCONNSTR_AZUREML_SERVICE_PRINCIPAL_SECRET }}
         CUSTOMCONNSTR_API_AUTH_SECRET: ${{ secrets.CUSTOMCONNSTR_API_AUTH_SECRET }}
-        CLUSTER: ${{ secrets.CLUSTER }}
-        WORKSPACE_NAME: ${{ secrets.WORKSPACE_NAME }}
-        EXPERIMENT_NAME: ${{ secrets.EXPERIMENT_NAME }}
-        RESOURCE_GROUP: ${{ secrets.RESOURCE_GROUP }}
+        CLUSTER: "training-nc12"
+        WORKSPACE_NAME: "InnerEye-DeepLearning"
+        EXPERIMENT_NAME: "api_inference"
+        RESOURCE_GROUP: "InnerEye-DeepLearning"
         SUBSCRIPTION_ID: ${{ secrets.SUBSCRIPTION_ID }}
         APPLICATION_ID: ${{ secrets.APPLICATION_ID }}
         TENANT_ID: ${{ secrets.TENANT_ID }}
+        DATASTORE_NAME: "inferencetestimagestore"
+        IMAGE_DATA_FOLDER: "temp-image-store"
       run: |
         conda activate inference
         pytest --cov=./ --cov-report=html
