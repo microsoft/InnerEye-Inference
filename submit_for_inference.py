@@ -114,10 +114,10 @@ def submit_for_inference(args: SubmitForInferenceConfig, workspace: Workspace, a
     source_config = SourceConfig(
         root_folder=source_directory_path,
         entry_script=entry_script,
-        script_params=["--model-id", model_id,
-                       "--script-name", SCORE_SCRIPT,
-                       "--datastore-name", azure_config.datastore_name,
-                       "--datastore-image-path", str(Path(target_path) / IMAGEDATA_FILE_NAME)])
+        script_params=["--model_id", model_id,
+                       "--script_name", SCORE_SCRIPT,
+                       "--datastore_name", azure_config.datastore_name,
+                       "--datastore_image_path", str(Path(target_path) / IMAGEDATA_FILE_NAME)])
     run_config = create_run_config(azure_config, source_config, environment_name=python_environment_name)
     exp = Experiment(workspace=workspace, name=args.experiment_name)
     run = exp.submit(run_config)

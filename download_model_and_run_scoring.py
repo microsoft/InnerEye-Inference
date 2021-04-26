@@ -52,13 +52,13 @@ def run() -> None:
     not retain images.
     """
     parser = argparse.ArgumentParser(description='Execute code inside of an AzureML model')
-    parser.add_argument('--model-id', dest='model_id', action='store', type=str, required=True, 
+    parser.add_argument('--model_id', dest='model_id', action='store', type=str, required=True, 
                         help='AzureML model ID')
-    parser.add_argument('--script-name', dest='script_name', action='store', type=str, required=True,
+    parser.add_argument('--script_name', dest='script_name', action='store', type=str, required=True,
                         help='Name of the script in the model that will produce the image scores')
-    parser.add_argument('--datastore-name', dest='datastore_name', action='store', type=str, required=True,
+    parser.add_argument('--datastore_name', dest='datastore_name', action='store', type=str, required=True,
                         help='Name of the datastore where the image data zip has been copied')
-    parser.add_argument('--datastore-image-path', dest='datastore_image_path', action='store', type=str, required=True,
+    parser.add_argument('--datastore_image_path', dest='datastore_image_path', action='store', type=str, required=True,
                         help='Path to the image data zip copied to the datastore')
     known_args, _ = parser.parse_known_args()    
 
