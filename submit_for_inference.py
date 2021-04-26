@@ -63,8 +63,7 @@ def create_run_config(azure_config: AzureConfig,
     run_config.environment = env
     run_config.target = azure_config.cluster
     run_config.max_run_duration_seconds = max_run_duration
-    # Use blob storage for storing the source, rather than the FileShares section of the storage
-    # account.
+    # Use blob storage for storing the source, rather than the FileShares section of the storage account.
     run_config.source_directory_data_store = workspace.datastores.get(WORKSPACE_DEFAULT_BLOB_STORE_NAME).name
     script_run_config = ScriptRunConfig(source_directory=str(source_config.root_folder), run_config=run_config)
     return script_run_config
