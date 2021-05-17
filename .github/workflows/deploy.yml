@@ -9,6 +9,9 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
     - name: Check curl version
+      run: curl -V
+
+    - name: Check curl version 2
       uses: wei/curl@v1
       with:
         args: -V
