@@ -13,8 +13,9 @@ jobs:
         working-directory: $GITHUB_WORKSPACE
     steps:
     - name: Check curl version
-      run: |
-        curl -V
+      uses: wei/curl@v1
+      with:
+        args: -V
 
     #
     # Create a repository dispatch event.
