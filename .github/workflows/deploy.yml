@@ -1,16 +1,12 @@
-# File: .github/workflows/workflow.yml
+name: Deploy to DEV
 
 on:
   push:
 
-name: Deploy to DEV
 
 jobs:
   build-and-deploy:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: $GITHUB_WORKSPACE
+    runs-on: ubuntu-20.04
     steps:
     - name: Check curl version
       uses: wei/curl@v1
