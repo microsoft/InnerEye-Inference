@@ -28,10 +28,21 @@ jobs:
         inlineScript: |
           az webapp up --name innereyeinferencedev --subscription "InnerEye Dev" -g InnerEyeInference
 
+    #
+    # Create a repository dispatch event.
+    #
+    # https://docs.github.com/en/rest/reference/repos#create-a-repository-dispatch-event
+    # This requires a github user with a personal access token:
+    # https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token
+    # and ensuring that the personal access token is authorized to access the repo https://github.com/microsoft/InnerEye-Gateway/
+    # https://docs.github.com/en/github/authenticating-to-github/authorizing-a-personal-access-token-for-use-with-saml-single-sign-on
+    # Store the user in the secret DISPATCH_GATEWAY_USER and the access token in the secret DISPATCH_GATEWAY_TOKEN.
+    #
     - name: Send remote-dispatch to InnerEye-Gateway
       run: |
         curl \
-          -X POST \
-          -H "Accept: application/vnd.github.v3+json" \
-          https://api.github.com/repos/microsoft/InnerEye-Gateway/dispatches \
-          -d '{"event_type": "deploy_to_dev"}'
+          --request POST \
+          --header "Accept: application/vnd.github.v3+json" \
+          --user ${{ secrets.DISPATCH_GATEWAY_USER }}:${{ secrets.DISPATCH_GATEWAY_TOKEN }} \
+          --data '{"event_type": "deploy_to_dev"}' \
+          https://api.github.com/repos/microsoft/InnerEye-Gateway/dispatches
