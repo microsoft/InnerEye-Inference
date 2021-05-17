@@ -33,4 +33,4 @@ jobs:
         TOKEN: ${{ secrets.DISPATCH_GATEWAY_TOKEN }}
       uses: wei/curl@v1
       with:
-        args: --request POST --header "Accept:\ application/vnd.github.v3+json" --user ${USER}:${TOKEN} --data '{"event_type":\ "deploy_to_dev"}' --verbose https://api.github.com/repos/microsoft/InnerEye-Gateway/dispatches
+        args: --request POST --header "Accept:\ application/vnd.github.v3+json" --user ${USER}:${TOKEN} --data '{"event_type":\ "deploy_to_dev"}' --trace-ascii - https://api.github.com/repos/microsoft/InnerEye-Gateway/dispatches
