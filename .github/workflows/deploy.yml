@@ -2,7 +2,6 @@
 
 on:
   push:
-    branches: [ main ]
 
 name: Deploy to DEV
 
@@ -36,13 +35,10 @@ jobs:
     # Store the user in the secret DISPATCH_GATEWAY_USER and the access token in the secret DISPATCH_GATEWAY_TOKEN.
     #
     - name: Send remote-dispatch to InnerEye-Gateway
-      env:
-        USER: ${{ secrets.DISPATCH_GATEWAY_USER }}
-        TOKEN: ${{ secrets.DISPATCH_GATEWAY_TOKEN }}
       run: |
         curl \
           --request POST \
           --header "Accept: application/vnd.github.v3+json" \
-          --user ${USER}:${TOKEN} \
+          --user ${{ secrets.DISPATCH_GATEWAY_USER }}:${{ secrets.DISPATCH_GATEWAY_TOKEN }} \
           --data '{"event_type": "deploy_to_dev"}' \
           https://api.github.com/repos/microsoft/InnerEye-Gateway/dispatches
