@@ -1,10 +1,13 @@
 name: Python
 
-on: [push]
+on:
+  push:
+  schedule:
+    - cron: '0 8 * * *'  # every day at 08:00
 
 jobs:
   build-linux:
-    runs-on: Ubuntu-20.04
+    runs-on: ubuntu-20.04
     strategy:
       max-parallel: 5
 
