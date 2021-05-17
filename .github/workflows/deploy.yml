@@ -2,6 +2,7 @@
 
 on:
   push:
+    branches: [ main ]
 
 name: Deploy to DEV
 
@@ -23,6 +24,7 @@ jobs:
         azcliversion: 2.20.0
         inlineScript: |
           az webapp up --name innereyeinferencedev --subscription "InnerEye Dev" -g InnerEyeInference
+
     #
     # Create a repository dispatch event.
     #
