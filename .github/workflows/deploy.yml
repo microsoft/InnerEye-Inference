@@ -9,9 +9,6 @@ name: Deploy to DEV
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: $GITHUB_WORKSPACE
     steps:
     - uses: actions/checkout@v2
       with:
