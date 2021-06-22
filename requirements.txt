@@ -5,7 +5,7 @@ pytest==6.0.1
 flask-injector==0.12.3
 SimpleITK==2.0.2
 flake8==3.8.4
-pytest-cov==2.10.1
+pytest-cov==2.12.1
 mypy==0.790
 pydicom==2.1.2
 Werkzeug==1.0.1
