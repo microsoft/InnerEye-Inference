@@ -1,7 +1,7 @@
 Flask==1.1.2
 azureml-sdk==1.23.0
 memory-tempfile==2.2.3
-pytest==6.0.1
+pytest==6.2.4
 flask-injector==0.12.3
 SimpleITK==2.0.2
 flake8==3.8.4
