@@ -103,6 +103,11 @@ To monitor progress of the previously submitted inference job, issue this comman
 ```
 curl -i \
     -H "API_AUTH_SECRET: <val of CUSTOMCONNSTR_API_AUTH_SECRET>" \
+    --head \
+    http://localhost:5000/v1/model/results/api_inference_1629291609_fb5dfdf9 \
+    --next \
+    -H "API_AUTH_SECRET: <val of CUSTOMCONNSTR_API_AUTH_SECRET>" \
+    --output "HN_rt.zip" \
     http://localhost:5000/v1/model/results/api_inference_1629291609_fb5dfdf9
 ```
 
@@ -113,9 +118,28 @@ HTTP/1.0 202 ACCEPTED
 Content-Type: text/html; charset=utf-8
 Content-Length: 0
 Server: Werkzeug/1.0.1 Python/3.7.3
-Date: Wed, 18 Aug 2021 13:07:14 GMT
+Date: Wed, 18 Aug 2021 13:45:20 GMT
+
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:--  0:00:01 --:--:--     0
 ``
 
+If the run is complete then this should produce an output similar to:
+
+```
+HTTP/1.0 200 OK
+Content-Type: application/zip
+Content-Length: 131202
+Server: Werkzeug/1.0.1 Python/3.7.3
+Date: Wed, 18 Aug 2021 14:01:27 GMT
+
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100  128k  100  128k    0     0   150k      0 --:--:-- --:--:-- --:--:--  150k
+```
+
+and download the zipped DICOM-RT file to `HN_rt.zip`.
 
 ### Running flask app in Azure
 * Install Azure CLI: `curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash`
