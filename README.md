@@ -47,7 +47,100 @@ Run with `source set_environment.sh`
 
 ### Running flask app locally
 * `flask run` to test it locally
-  
+
+### Testing flask app locally
+
+The app can be tested locally using [`curl`](https://curl.se/).
+
+#### Ping
+
+To check that the server is running, issue this command from a local shell:
+
+```
+curl -i -H "API_AUTH_SECRET: <val of CUSTOMCONNSTR_API_AUTH_SECRET>" http://localhost:5000/v1/ping
+```
+
+This should produce an output similar to:
+
+```
+HTTP/1.0 200 OK
+Content-Type: text/html; charset=utf-8
+Content-Length: 0
+Server: Werkzeug/1.0.1 Python/3.7.3
+Date: Wed, 18 Aug 2021 11:50:20 GMT
+```
+
+#### Start
+
+To test DICOM image segmentation of a file, first create `Tests/TestData/HN.zip` containing a zipped set of the test DICOM files in `Tests/TestData/HN`. Then assuming there is a model `PassThroughModel:4`, issue this command:
+
+```
+curl -i \
+    -X POST \
+    -H "API_AUTH_SECRET: <val of CUSTOMCONNSTR_API_AUTH_SECRET>" \
+    --data-binary @Tests/TestData/HN.zip \
+    http://localhost:5000/v1/model/start/PassThroughModel:4
+```
+
+This should produce an output similar to:
+
+```
+HTTP/1.0 201 CREATED
+Content-Type: text/plain
+Content-Length: 33
+Server: Werkzeug/1.0.1 Python/3.7.3
+Date: Wed, 18 Aug 2021 13:00:13 GMT
+
+api_inference_1629291609_fb5dfdf9
+```
+
+here `api_inference_1629291609_fb5dfdf9` is the run id for the newly submitted inference job.
+
+#### Results
+
+To monitor the progress of the previously submitted inference job, issue this command:
+
+```
+curl -i \
+    -H "API_AUTH_SECRET: <val of CUSTOMCONNSTR_API_AUTH_SECRET>" \
+    --head \
+    http://localhost:5000/v1/model/results/api_inference_1629291609_fb5dfdf9 \
+    --next \
+    -H "API_AUTH_SECRET: <val of CUSTOMCONNSTR_API_AUTH_SECRET>" \
+    --output "HN_rt.zip" \
+    http://localhost:5000/v1/model/results/api_inference_1629291609_fb5dfdf9
+```
+
+If the run is still in progress then this should produce output similar to:
+
+```
+HTTP/1.0 202 ACCEPTED
+Content-Type: text/html; charset=utf-8
+Content-Length: 0
+Server: Werkzeug/1.0.1 Python/3.7.3
+Date: Wed, 18 Aug 2021 13:45:20 GMT
+
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:--  0:00:01 --:--:--     0
+```
+
+If the run is complete then this should produce an output similar to:
+
+```
+HTTP/1.0 200 OK
+Content-Type: application/zip
+Content-Length: 131202
+Server: Werkzeug/1.0.1 Python/3.7.3
+Date: Wed, 18 Aug 2021 14:01:27 GMT
+
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100  128k  100  128k    0     0   150k      0 --:--:-- --:--:-- --:--:--  150k
+```
+
+and download the inference result as a zipped DICOM-RT file to `HN_rt.zip`.
+
 ### Running flask app in Azure
 * Install Azure CLI: `curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash`
 * Login: `az login --use-device-code`  
