@@ -1,4 +1,4 @@
-Flask==1.1.2
+Flask==2.0.3
 azureml-sdk==1.23.0
 memory-tempfile==2.2.3
 pytest==6.0.1
