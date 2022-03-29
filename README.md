@@ -3,7 +3,7 @@
 
 InnerEye-Inference is a AppService webapp in python to run inference on medical imaging models trained with the [InnerEye-DeepLearning toolkit](https://github.com/microsoft/InnerEye-Inference).
 
-You can also integrate this with DICOM using the  [InnerEye-EdgeGateway](https://github.com/microsoft/InnerEye-Gateway)
+You can also integrate this with DICOM using the  [InnerEye-Gateway](https://github.com/microsoft/InnerEye-Gateway)
 
 ## Getting Started
 
