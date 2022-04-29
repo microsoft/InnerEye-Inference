@@ -201,5 +201,5 @@ def download_result(run_id: str, workspace: Workspace) -> Response:
         return make_error_response(HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR)
 
 
-# Setup Flask Injector, this has to happen AFTER routes are added
+# Setup Flask Injector, this has to happen *AFTER* routes are added
 FlaskInjector(app=app, modules=[configure])
