@@ -11,16 +11,18 @@ import zipfile
 from pathlib import Path
 from typing import Any, Optional
 from unittest import mock
-from azureml._restclient.constants import RunStatus
-from azureml.core import Experiment, Model, Workspace, Datastore
-from azureml.exceptions import WebserviceException
-from flask import Response
-from pydicom import dcmread
 
-from app import ERROR_EXTRA_DETAILS, HTTP_STATUS_CODE, RUNNING_OR_POST_PROCESSING, app
+from app import ERROR_EXTRA_DETAILS, HTTP_STATUS_CODE, app
+from azureml._restclient.constants import RunStatus
+from azureml.core import Datastore, Experiment, Model, Workspace
+from azureml.exceptions import WebserviceException
 from configure import API_AUTH_SECRET, API_AUTH_SECRET_HEADER_NAME, get_azure_config
 from download_model_and_run_scoring import DELETED_IMAGE_DATA_NOTIFICATION
-from submit_for_inference import DEFAULT_RESULT_IMAGE_NAME, IMAGEDATA_FILE_NAME, SubmitForInferenceConfig, submit_for_inference
+from pydicom import dcmread
+from submit_for_inference import (
+    DEFAULT_RESULT_IMAGE_NAME, IMAGEDATA_FILE_NAME, SubmitForInferenceConfig, submit_for_inference
+)
+from werkzeug.test import TestResponse
 
 # Timeout, in seconds, for Azure runs, 20 minutes.
 TIMEOUT_IN_SECONDS = 20 * 60
@@ -32,10 +34,10 @@ TEST_DATA_DIR: Path = THIS_DIR / "TestData"
 # Test reference series.
 TestDicomVolumeLocation: Path = TEST_DATA_DIR / "HN"
 
-PASSTHROUGH_MODEL_ID = "PassThroughModel:4"
+PASSTHROUGH_MODEL_ID = "PassThroughModel:1703"
 
 
-def assert_response_error_type(response: Response, status_code: HTTP_STATUS_CODE,
+def assert_response_error_type(response: TestResponse, status_code: HTTP_STATUS_CODE,
                                extra_details: Optional[ERROR_EXTRA_DETAILS] = None) -> None:
     """
     Assert that response contains an error, formatted as JSON.
@@ -47,14 +49,19 @@ def assert_response_error_type(response: Response, status_code: HTTP_STATUS_CODE
     assert response.content_type == 'application/json'
     # assert response.data == b''
     assert response.status_code == status_code.value
-    assert len(response.json['code']) > 0
-    assert len(response.json['detail']) > 0
-    assert response.json['status'] == status_code.value
-    assert len(response.json['title']) > 0
+    response_json = response.json
+
+    # this makes mypy happy that a dictionary has actually been returned 
+    assert response_json is not None
+
+    assert len(response_json['code']) > 0 
+    assert len(response_json['detail']) > 0
+    assert response_json['status'] == status_code.value
+    assert len(response_json['title']) > 0
     if extra_details is not None:
-        assert response.json['extra_details'] == extra_details.value
+        assert response_json['extra_details'] == extra_details.value
     else:
-        assert 'extra_details' not in response.json
+        assert 'extra_details' not in response_json
 
 
 def test_ping_unauthorized() -> None:
@@ -302,6 +309,7 @@ def test_submit_for_inference_end_to_end() -> None:
             zip_file.extractall(extraction_folder_path)
         # Check that there is a single file in the zip, not in a directory.
         extracted_files = list(extraction_folder_path.glob('**/*'))
+        print(extracted_files)
         assert len(extracted_files) == 1
         extracted_file = extracted_files[0]
         assert extracted_file.is_file()
