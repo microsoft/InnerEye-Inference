@@ -34,7 +34,7 @@ TEST_DATA_DIR: Path = THIS_DIR / "TestData"
 # Test reference series.
 TestDicomVolumeLocation: Path = TEST_DATA_DIR / "HN"
 
-PASSTHROUGH_MODEL_ID = "PassThroughModel:1691"
+PASSTHROUGH_MODEL_ID = "PassThroughModel:1703"
 
 
 def assert_response_error_type(response: TestResponse, status_code: HTTP_STATUS_CODE,
@@ -309,6 +309,7 @@ def test_submit_for_inference_end_to_end() -> None:
             zip_file.extractall(extraction_folder_path)
         # Check that there is a single file in the zip, not in a directory.
         extracted_files = list(extraction_folder_path.glob('**/*'))
+        print(extracted_files)
         assert len(extracted_files) == 1
         extracted_file = extracted_files[0]
         assert extracted_file.is_file()
