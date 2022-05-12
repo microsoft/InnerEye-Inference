@@ -29,7 +29,8 @@ jobs:
       shell: bash -l {0}
       run: |
         conda activate inference
-        find . -type f -name "*.py" | xargs mypy
+        mypy --install-types
+        find . -type f -name "*.py" | xargs mypy --no-incremental
     - name: Test with pytest
       shell: bash -l {0}
       env:
