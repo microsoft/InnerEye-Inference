@@ -9,7 +9,6 @@ from pathlib import Path
 import sys
 import tempfile
 from typing import Any, Dict, Optional
-
 from azureml._restclient.constants import RunStatus
 from azureml._restclient.exceptions import ServiceException
 from azureml.core import Workspace
@@ -149,6 +148,71 @@ def start_model(model_id: str, workspace: Workspace, azure_config: AzureConfig) 
         return make_error_response(HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR)
 
 
+def read_log_file(log_path: Path) -> str:
+    """
+    Given a log file path, returns the text in the log file if it exists.
+
+    :param log_path: Path to log file.
+    :return: Text in log file if it exists, empty string if not.
+    """
+    log_text = ""
+    if log_path.exists():
+        log_text = log_path.read_text()
+    return log_text
+
+
+def check_run_logs_for_zip_errors(run) -> bool:
+    """Checks AzureML log files for zip errors, both old and new runtime logs.
+
+    :param run: object representing run to be checked.
+    :return: True if zip error found in logs, False if not.
+    """
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        # Download the azureml-log files
+        run.download_files(prefix="azureml-logs", output_directory=tmpdirname,
+                            append_prefix=False)
+        # In particular look for 70_driver_log.txt
+        driver_log_path = Path(tmpdirname) / '70_driver_log.txt'
+        driver_log = read_log_file(driver_log_path)
+        if "zipfile.BadZipFile" in driver_log:
+            return True
+
+
+def get_cancelled_or_failed_run_response(run, run_status) -> Response:
+    """Given a run object, generates an HTTP response based upon its status
+
+    :param run: Object representing run to be cheked.
+    :param run_status: Status of incomplete run.
+    :return: HTTP response containing relevant information about run.
+    """
+    if run_status == RunStatus.FAILED:
+        if check_run_logs_for_zip_errors(run):
+            return make_error_response(HTTP_STATUS_CODE.BAD_REQUEST,
+                            ERROR_EXTRA_DETAILS.INVALID_ZIP_FILE)
+
+    elif run_status == RunStatus.CANCELED:
+        return make_error_response(HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR,
+                                    ERROR_EXTRA_DETAILS.RUN_CANCELLED)
+    return make_error_response(HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR)
+
+
+def get_completed_result_bytes(run) -> Response:
+    """Given a completed run, download the run result file as return as HTTP response.
+
+    :param run: Object representing completed run.
+    :return: HTTP response containing result bytes.
+    """
+    memory_tempfile = MemoryTempfile(fallback=True)
+    with memory_tempfile.NamedTemporaryFile() as tf:
+        file_name = str(tf.name)
+        run.download_file(DEFAULT_RESULT_IMAGE_NAME, file_name)
+        tf.seek(0)
+        result_bytes = tf.read()
+    response = make_response(result_bytes, HTTP_STATUS_CODE.OK.value)
+    response.headers.set('Content-Type', 'application/zip')
+    return response
+
+
 @inject
 @app.route("/v1/model/results/<run_id>", methods=['GET'])
 def download_result(run_id: str, workspace: Workspace) -> Response:
@@ -163,33 +227,12 @@ def download_result(run_id: str, workspace: Workspace) -> Response:
         if run_status in RUNNING_OR_POST_PROCESSING:
             return make_response("", HTTP_STATUS_CODE.ACCEPTED.value)
         logging.info(f"Run has completed with status {run.get_status()}")
+
         if run_status != RunStatus.COMPLETED:
-            # Run cancelled or failed.
-            if run_status == RunStatus.FAILED:
-                with tempfile.TemporaryDirectory() as tmpdirname:
-                    # Download the azureml-log files
-                    run.download_files(prefix="azureml-logs", output_directory=tmpdirname,
-                                       append_prefix=False)
-                    # In particular look for 70_driver_log.txt
-                    driver_log_path = Path(tmpdirname) / '70_driver_log.txt'
-                    if driver_log_path.exists():
-                        driver_log = driver_log_path.read_text()
-                        if "zipfile.BadZipFile" in driver_log:
-                            return make_error_response(HTTP_STATUS_CODE.BAD_REQUEST,
-                                                       ERROR_EXTRA_DETAILS.INVALID_ZIP_FILE)
-            if run_status == RunStatus.CANCELED:
-                return make_error_response(HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR,
-                                           ERROR_EXTRA_DETAILS.RUN_CANCELLED)
-            return make_error_response(HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR)
-        memory_tempfile = MemoryTempfile(fallback=True)
-        with memory_tempfile.NamedTemporaryFile() as tf:
-            file_name = str(tf.name)
-            run.download_file(DEFAULT_RESULT_IMAGE_NAME, file_name)
-            tf.seek(0)
-            result_bytes = tf.read()
-        response = make_response(result_bytes, HTTP_STATUS_CODE.OK.value)
-        response.headers.set('Content-Type', 'application/zip')
-        return response
+            return get_cancelled_or_failed_run_response(run, run_status)
+
+        return get_completed_result_bytes(run)
+
     except ServiceException as error:
         if error.status_code == 404:
             return make_error_response(HTTP_STATUS_CODE.NOT_FOUND,
