@@ -34,7 +34,7 @@ TEST_DATA_DIR: Path = THIS_DIR / "TestData"
 # Test reference series.
 TestDicomVolumeLocation: Path = TEST_DATA_DIR / "HN"
 
-PASSTHROUGH_MODEL_ID = "PassThroughModel:1703"
+PASSTHROUGH_MODEL_ID = "PassThroughModel:1711"
 
 
 def assert_response_error_type(response: TestResponse, status_code: HTTP_STATUS_CODE,
