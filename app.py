@@ -11,7 +11,7 @@ import tempfile
 from typing import Any, Dict, Optional
 from azureml._restclient.constants import RunStatus
 from azureml._restclient.exceptions import ServiceException
-from azureml.core import Workspace
+from azureml.core import Workspace, Run
 from azureml.exceptions import WebserviceException
 from flask import Flask, Response, make_response, jsonify, Request, request
 from flask_injector import FlaskInjector
@@ -161,7 +161,7 @@ def read_log_file(log_path: Path) -> str:
     return log_text
 
 
-def check_run_logs_for_zip_errors(run) -> bool:
+def check_run_logs_for_zip_errors(run: Run) -> bool:
     """Checks AzureML log files for zip errors, both old and new runtime logs.
 
     :param run: object representing run to be checked.
@@ -177,8 +177,9 @@ def check_run_logs_for_zip_errors(run) -> bool:
         if "zipfile.BadZipFile" in driver_log:
             return True
 
+    return False
 
-def get_cancelled_or_failed_run_response(run, run_status) -> Response:
+def get_cancelled_or_failed_run_response(run: Run, run_status: Any) -> Response:
     """Given a run object, generates an HTTP response based upon its status
 
     :param run: Object representing run to be cheked.
@@ -196,7 +197,7 @@ def get_cancelled_or_failed_run_response(run, run_status) -> Response:
     return make_error_response(HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR)
 
 
-def get_completed_result_bytes(run) -> Response:
+def get_completed_result_bytes(run: Run) -> Response:
     """Given a completed run, download the run result file as return as HTTP response.
 
     :param run: Object representing completed run.
