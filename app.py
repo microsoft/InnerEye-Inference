@@ -156,9 +156,7 @@ def check_run_logs_for_zip_errors(run: Run) -> bool:
     """
 
     driver_log = get_driver_log_file_text(run=run)
-    if "zipfile.BadZipFile" in driver_log:
-        return True
-    return False
+    return "zipfile.BadZipFile" in driver_log
 
 def get_cancelled_or_failed_run_response(run: Run, run_status: Any) -> Response:
     """Generates an HTTP response based upon run status
