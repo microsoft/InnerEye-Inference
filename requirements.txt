@@ -7,6 +7,6 @@ memory-tempfile==2.2.3
 mypy==0.790
 pydicom==2.1.2
 pytest-cov==2.10.1
-pytest==6.0.1
+pytest==7.1.2
 SimpleITK==2.0.2
 Werkzeug==2.1.1
