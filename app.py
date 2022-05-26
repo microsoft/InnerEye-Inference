@@ -177,14 +177,14 @@ def get_cancelled_or_failed_run_response(run: Run, run_status: Any) -> Response:
 
 
 def get_completed_result_bytes(run: Run) -> Response:
-    """Given a completed run, download the run result file as return as HTTP response.
+    """Given a completed run, download the run result file and return as an HTTP response.
 
     :param run: Object representing completed run.
     :return: HTTP response containing result bytes.
     """
     memory_tempfile = MemoryTempfile(fallback=True)
     with memory_tempfile.NamedTemporaryFile() as tf:
-        file_name = str(tf.name)
+        file_name = tf.name
         run.download_file(DEFAULT_RESULT_IMAGE_NAME, file_name)
         tf.seek(0)
         result_bytes = tf.read()
