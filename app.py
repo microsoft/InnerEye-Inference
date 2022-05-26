@@ -3,24 +3,24 @@
 #  Licensed under the MIT License (MIT). See LICENSE in the repo root for license information.
 #  ------------------------------------------------------------------------------------------
 
-from enum import Enum
 import logging
-from pathlib import Path
 import sys
-import tempfile
+from enum import Enum
 from typing import Any, Dict, Optional
+
 from azureml._restclient.constants import RunStatus
 from azureml._restclient.exceptions import ServiceException
-from azureml.core import Workspace, Run
+from azureml.core import Run, Workspace
 from azureml.exceptions import WebserviceException
-from flask import Flask, Response, make_response, jsonify, Request, request
+from flask import Flask, Request, Response, jsonify, make_response, request
 from flask_injector import FlaskInjector
+from health_azure.utils import get_driver_log_file_text
 from injector import inject
 from memory_tempfile import MemoryTempfile
 
 from azure_config import AzureConfig
-from configure import configure, API_AUTH_SECRET_HEADER_NAME, API_AUTH_SECRET
-from submit_for_inference import DEFAULT_RESULT_IMAGE_NAME, submit_for_inference, SubmitForInferenceConfig
+from configure import API_AUTH_SECRET, API_AUTH_SECRET_HEADER_NAME, configure
+from submit_for_inference import DEFAULT_RESULT_IMAGE_NAME, SubmitForInferenceConfig, submit_for_inference
 
 app = Flask(__name__)
 
@@ -148,41 +148,22 @@ def start_model(model_id: str, workspace: Workspace, azure_config: AzureConfig) 
         return make_error_response(HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR)
 
 
-def read_log_file(log_path: Path) -> str:
-    """
-    Given a log file path, returns the text in the log file if it exists.
-
-    :param log_path: Path to log file.
-    :return: Text in log file if it exists, empty string if not.
-    """
-    log_text = ""
-    if log_path.exists():
-        log_text = log_path.read_text()
-    return log_text
-
-
 def check_run_logs_for_zip_errors(run: Run) -> bool:
-    """Checks AzureML log files for zip errors, both old and new runtime logs.
+    """Checks AzureML log files for zip errors.
 
     :param run: object representing run to be checked.
-    :return: True if zip error found in logs, False if not.
+    :return: ``True`` if zip error found in logs, ``False`` if not.
     """
-    with tempfile.TemporaryDirectory() as tmpdirname:
-        # Download the azureml-log files
-        run.download_files(prefix="azureml-logs", output_directory=tmpdirname,
-                            append_prefix=False)
-        # In particular look for 70_driver_log.txt
-        driver_log_path = Path(tmpdirname) / '70_driver_log.txt'
-        driver_log = read_log_file(driver_log_path)
-        if "zipfile.BadZipFile" in driver_log:
-            return True
 
+    driver_log = get_driver_log_file_text(run=run)
+    if "zipfile.BadZipFile" in driver_log:
+        return True
     return False
 
 def get_cancelled_or_failed_run_response(run: Run, run_status: Any) -> Response:
-    """Given a run object, generates an HTTP response based upon its status
+    """Generates an HTTP response based upon run status
 
-    :param run: Object representing run to be cheked.
+    :param run: Object representing run to be checked.
     :param run_status: Status of incomplete run.
     :return: HTTP response containing relevant information about run.
     """
