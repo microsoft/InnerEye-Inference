@@ -20,9 +20,18 @@ You can install build tools on Ubuntu (and Debian-based distributions) by runnin
 If you are running CentOS/RHEL distributions, you can install the build tools by running
 `yum install gcc gcc-c++ kernel-devel make`
 
+#### Linux Users
+
 Start the `conda` prompt for your platform. In that prompt, navigate to your repository root and run
 
 * `conda env create --file environment.yml`
+* `conda activate inference`
+
+#### Windows Users
+
+Start the `conda` prompt for your platform. In that prompt, navigate to your repository root and run
+
+* `conda env create --file environment_win.yml`
 * `conda activate inference`
 
 ### Configuration
@@ -186,7 +195,7 @@ During inference the image data zip file is copied to the IMAGE_DATA_FOLDER in t
 
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a
 Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us
-the rights to use your contribution. For details, visit the [the Microsoft CLA site](https://cla.opensource.microsoft.com).
+the rights to use your contribution. For details, visit the [Microsoft CLA site](https://cla.opensource.microsoft.com).
 
 When you submit a pull request, a CLA bot will automatically determine whether you need to provide
 a CLA and decorate the PR appropriately (e.g., status check, comment). Simply follow the instructions
