@@ -16,23 +16,27 @@ and run it.
 Note that in order to create the Conda environment you will need to have build tools installed on your machine. If you are running Windows, they should be already installed with Conda distribution.
 
 You can install build tools on Ubuntu (and Debian-based distributions) by running
-`sudo apt-get install build-essential`
+`sudo apt-get install build-essential`.
 If you are running CentOS/RHEL distributions, you can install the build tools by running
-`yum install gcc gcc-c++ kernel-devel make`
+`yum install gcc gcc-c++ kernel-devel make`.
 
 #### Linux Users
 
 Start the `conda` prompt for your platform. In that prompt, navigate to your repository root and run
 
-* `conda env create --file environment.yml`
-* `conda activate inference`
+```console
+conda env create --file environment.yml
+conda activate inference
+```
 
 #### Windows Users
 
 Start the `conda` prompt for your platform. In that prompt, navigate to your repository root and run
 
-* `conda env create --file environment_win.yml`
-* `conda activate inference`
+```console
+conda env create --file environment_win.yml
+conda activate inference
+```
 
 ### Configuration
 
@@ -73,7 +77,7 @@ curl -i -H "API_AUTH_SECRET: <val of CUSTOMCONNSTR_API_AUTH_SECRET>" http://loca
 
 This should produce an output similar to:
 
-```console
+```text
 HTTP/1.0 200 OK
 Content-Type: text/html; charset=utf-8
 Content-Length: 0
@@ -85,7 +89,7 @@ Date: Wed, 18 Aug 2021 11:50:20 GMT
 
 To test DICOM image segmentation of a file, first create `Tests/TestData/HN.zip` containing a zipped set of the test DICOM files in `Tests/TestData/HN`. Then assuming there is a model `PassThroughModel:4`, issue this command:
 
-```console
+```text
 curl -i \
     -X POST \
     -H "API_AUTH_SECRET: <val of CUSTOMCONNSTR_API_AUTH_SECRET>" \
@@ -95,7 +99,7 @@ curl -i \
 
 This should produce an output similar to:
 
-```console
+```text
 HTTP/1.0 201 CREATED
 Content-Type: text/plain
 Content-Length: 33
@@ -124,7 +128,7 @@ curl -i \
 
 If the run is still in progress then this should produce output similar to:
 
-```console
+```text
 HTTP/1.0 202 ACCEPTED
 Content-Type: text/html; charset=utf-8
 Content-Length: 0
@@ -138,7 +142,7 @@ Date: Wed, 18 Aug 2021 13:45:20 GMT
 
 If the run is complete then this should produce an output similar to:
 
-```console
+```text
 HTTP/1.0 200 OK
 Content-Type: application/zip
 Content-Length: 131202
@@ -154,10 +158,10 @@ and download the inference result as a zipped DICOM-RT file to `HN_rt.zip`.
 
 ### Running flask app in Azure
 
-* Install Azure CLI: `curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash`
-* Login: `az login --use-device-code`
-* Deploy: `az webapp up --sku S1 --name test-python12345 --subscription <your_subscription_name> -g InnerEyeInference --location <your region>`
-* In the Azure portal go to Monitoring > Log Stream for debugging logs
+1. Install Azure CLI: `curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash`
+2. Login: `az login --use-device-code`
+3. Deploy: `az webapp up --sku S1 --name test-python12345 --subscription <your_subscription_name> -g InnerEyeInference --location <your region>`
+4. In the Azure portal go to Monitoring > Log Stream for debugging logs
 
 ### Deployment build
 
@@ -175,9 +179,9 @@ During inference the image data zip file is copied to the IMAGE_DATA_FOLDER in t
 1. Make your desired changes in `primary_deps.yml`. Make sure your package name and version are correct.
 2. To create a new environment and a valid `environment.yml`, run the following command:
 
-    ```shell
-    bash -i create_and_lock_environment.sh
-    ```
+ ```shell
+ bash -i create_and_lock_environment.sh
+ ```
 
 3. Voila! You will now have a new conda environment with your desired primary package versions, as well as a new `environment.yml` which can be ingested by AzureML to create a copy of your local environment.
 
