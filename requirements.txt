@@ -1,0 +1,3 @@
+# DO NOT REMOVE THIS FILE
+# Package dependencies are stored in environment.yml
+# This file is only here to allow "az webapp up" to run without errors.
