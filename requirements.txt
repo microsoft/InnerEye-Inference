@@ -50,7 +50,7 @@ fusepy==3.0.1
 google-auth==2.9.0
 google-auth-oauthlib==0.4.6
 grpcio==1.47.0
-hi-ml-azure==0.2.1
+hi-ml-azure==0.2.3
 humanfriendly==10.0
 idna==3.3
 importlib-metadata==4.12.0
