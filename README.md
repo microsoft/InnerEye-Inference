@@ -209,6 +209,9 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
 For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or
 contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
 
+## Disclaimer
+The InnerEye Deep Learning Toolkit, Inner Eye-Gateway and InnerEye-Inference (collectively the “Research Tools”) are provided AS-IS for use by third parties for the purposes of research, experimental design and testing of machine learning models. The Research Tools are not intended or made available for clinical use as a medical device, clinical support, diagnostic tool, or other technology intended to be used in the diagnosis, cure, mitigation, treatment, or prevention of disease or other conditions. The Research Tools are not designed or intended to be a substitute for professional medical advice, diagnosis, treatment, or judgment and should not be used as such. All users are responsible for reviewing the output of the developed model to determine whether the model meets the user’s needs and for validating and evaluating the model before any clinical use. Microsoft does not warrant that the Research Tools or any materials provided in connection therewith will be sufficient for any medical purposes or meet the health or medical requirements of any person.
+
 ## Microsoft Open Source Code of Conduct
 
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
