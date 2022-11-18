@@ -55,7 +55,7 @@ jobs:
     - name: Azure Login
       uses: Azure/login@v1
       with:
-        creds: '{"clientId":"${{ secrets.TEST_CLIENT_ID }}","clientSecret":"${{ secrets.TEST_CLIENT_SECRET }}","subscriptionId":"${{ secrets.SUBSCRIPTION_ID }}","tenantId":"${{ secrets.TENANT_ID }}"}'
+        creds: '{"clientId":"${{ secrets.AZURE_CLIENT_ID }}","clientSecret":"${{ secrets.AZURE_CLIENT_SECRET }}","subscriptionId":"${{ secrets.SUBSCRIPTION_ID }}","tenantId":"${{ secrets.TENANT_ID }}"}'
 
     - name: Deploy Azure App Service
       uses: azure/CLI@v1
