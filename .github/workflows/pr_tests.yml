@@ -9,11 +9,13 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
 
-    - uses: actions/checkout@v2
+    - name: Checkout Repo
+      uses: actions/checkout@v2
       with:
         lfs: true
 
-    - uses: conda-incubator/setup-miniconda@v2
+    - name: Set Up Conda Environment
+      uses: conda-incubator/setup-miniconda@v2
       with:
         miniconda-version: "latest"
         activate-environment: inference
@@ -55,6 +57,12 @@ jobs:
       group: ${{ github.head_ref }}
       cancel-in-progress: true
     steps:
+
+    - name: Checkout Repo
+      uses: actions/checkout@v2
+      with:
+        lfs: true
+
     - name: Azure Login
       uses: Azure/login@v1
       with:
@@ -65,4 +73,5 @@ jobs:
       with:
         azcliversion: 2.42.0
         inlineScript: |
-          az webapp up --sku S1 --name innereyeinferencetest --subscription "InnerEye Dev" -g InnerEye-Inference --location ukwest --runtime PYTHON:3.7
+          az webapp up --name innereyeinferencetest --subscription "InnerEye Dev" -g InnerEye-Inference --sku S1 --location ukwest --runtime PYTHON:3.7
+          az webapp delete --name innereyeinferencetest --subscription "InnerEye Dev" -g InnerEye-Inference
