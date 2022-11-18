@@ -53,11 +53,11 @@ jobs:
         pytest --cov=./ --cov-report=html
 
     - name: Azure Login
-      uses: azure/login@v1
+      uses: Azure/login@v1
       with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
+        creds: '{"clientId":"${{ secrets.TEST_CLIENT_ID }}","clientSecret":"${{ secrets.TEST_CLIENT_SECRET }}","subscriptionId":"${{ secrets.SUBSCRIPTION_ID }}","tenantId":"${{ secrets.TENANT_ID }}"}'
 
-    - name: az deploy
+    - name: Deploy Azure App Service
       uses: azure/CLI@v1
       with:
         azcliversion: 2.42.0
