@@ -66,4 +66,3 @@ jobs:
         azcliversion: 2.42.0
         inlineScript: |
           az webapp up --sku S1 --name innereyeinferencetest --subscription "InnerEye Dev" -g InnerEye-Inference --location ukwest --runtime PYTHON:3.7
-          az webapp delete --name innereyeinferencetest --subscription "InnerEye Dev" -g InnerEye-Inference
