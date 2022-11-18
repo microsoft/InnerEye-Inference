@@ -1,10 +1,8 @@
-# File: .github/workflows/workflow.yml
+name: Deploy to Dev
 
 on:
   push:
     branches: [ main ]
-
-name: Deploy to DEV
 
 jobs:
   build-and-deploy:
@@ -23,7 +21,7 @@ jobs:
       with:
         azcliversion: 2.20.0
         inlineScript: |
-          az webapp up --name innereyeinferencedev --subscription "InnerEye Dev" -g InnerEyeInference
+          az webapp up --name innereyeinferencedev-2 --subscription "InnerEye Dev" -g InnerEyeInference
 
     #
     # Create a repository dispatch event.
