@@ -51,6 +51,9 @@ jobs:
 
   test-azure-deployment:
     runs-on: ubuntu-20.04
+    concurrency:
+      group: ${{ github.head_ref }}
+      cancel-in-progress: true
     steps:
     - name: Azure Login
       uses: Azure/login@v1
