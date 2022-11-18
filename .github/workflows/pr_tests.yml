@@ -1,15 +1,12 @@
-name: Test build and deploy
+name: PR Tests
 
 on:
   pull_request:
     branches: [ main ]
 
 jobs:
-  build-linux:
+  linux-build-and-test:
     runs-on: ubuntu-20.04
-    strategy:
-      max-parallel: 5
-
     steps:
 
     - uses: actions/checkout@v2
@@ -52,6 +49,9 @@ jobs:
         conda activate inference
         pytest --cov=./ --cov-report=html
 
+  test-azure-deployment:
+    runs-on: ubuntu-20.04
+    steps:
     - name: Azure Login
       uses: Azure/login@v1
       with:
