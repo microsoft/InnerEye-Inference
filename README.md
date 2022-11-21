@@ -6,6 +6,15 @@ You can also integrate this with DICOM using the  [InnerEye-Gateway](https://git
 
 ## Getting Started
 
+### Operating System
+
+If developing or using this tool locally, we highly recommend using [Ubuntu 20.04](https://releases.ubuntu.com/20.04/) as your operating system. This is for two reasons:
+
+- The Azure App Service base image will be Ubuntu. By developing locally in Ubuntu you can guarantee maximum repeatibility between local and cloud behaviour.
+- The provided `environment.yml` contains locked secondary package dependencies for Ubuntu **only**. We cannot guarantee identical functionality to our dev environments if you use other operating systems.
+
+For windows users this is easily done through [Windows Subsystem for Linux](https://learn.microsoft.com/en-us/windows/wsl/install).
+
 ### Installing Conda or Miniconda
 
 Download a Conda or Miniconda [installer for your platform](https://docs.conda.io/en/latest/miniconda.html)
@@ -20,7 +29,7 @@ You can install build tools on Ubuntu (and Debian-based distributions) by runnin
 If you are running CentOS/RHEL distributions, you can install the build tools by running
 `yum install gcc gcc-c++ kernel-devel make`.
 
-#### Linux Users
+#### Ubuntu Users
 
 Start the `conda` prompt for your platform. In that prompt, navigate to your repository root and run
 
@@ -29,7 +38,7 @@ conda env create --file environment.yml
 conda activate inference
 ```
 
-#### Windows Users
+#### Other Operating Sytem Users
 
 Start the `conda` prompt for your platform. In that prompt, navigate to your repository root and run
 
@@ -37,6 +46,8 @@ Start the `conda` prompt for your platform. In that prompt, navigate to your rep
 conda env create --file primary_deps.yml
 conda activate inference
 ```
+
+This will build an environment from the primary package dependencies only. This means that the packages and versions that the primary packages depend upon will be different from those defined in `environment.yml` and as such may behave differently to the application when [deployed to Azure](#running-flask-app-in-azure).
 
 ### Configuration
 
@@ -61,7 +72,7 @@ Run with `source set_environment.sh`
 
 ### Running flask app locally
 
-* `flask run` to test it locally
+- `flask run` to test it locally
 
 ### Testing flask app locally
 
@@ -167,8 +178,8 @@ and download the inference result as a zipped DICOM-RT file to `HN_rt.zip`.
 
 If you would like to reproduce the automatic deployment of the service for testing purposes:
 
-* `az ad sp create-for-rbac --name "<name>" --role contributor --scope /subscriptions/<subs>/resourceGroups/InnerEyeInference --sdk-auth`
-* The previous command will return a json object with the content for the variable `secrets.AZURE_CREDENTIALS` .github/workflows/deploy.yml
+- `az ad sp create-for-rbac --name "<name>" --role contributor --scope /subscriptions/<subs>/resourceGroups/InnerEyeInference --sdk-auth`
+- The previous command will return a json object with the content for the variable `secrets.AZURE_CREDENTIALS` .github/workflows/deploy.yml
 
 ## Images
 
@@ -177,13 +188,13 @@ During inference the image data zip file is copied to the IMAGE_DATA_FOLDER in t
 ## Changing Primary Dependencies
 
 1. Make your desired changes in `primary_deps.yml`. Make sure your package name and version are correct.
-2. To create a new environment and a valid `environment.yml`, run the following command:
+1. To create a new environment and a valid `environment.yml`, run the following command:
 
- ```shell
- bash -i create_and_lock_environment.sh
- ```
+   ```shell
+   bash -i create_and_lock_environment.sh
+   ```
 
-3. Voila! You will now have a new conda environment with your desired primary package versions, as well as a new `environment.yml` which can be ingested by AzureML to create a copy of your local environment.
+1. Voila! You will now have a new conda environment with your desired primary package versions, as well as a new `environment.yml` which can be ingested by AzureML to create a copy of your local environment.
 
 ## Help and Bug Reporting
 
@@ -193,7 +204,7 @@ During inference the image data zip file is copied to the IMAGE_DATA_FOLDER in t
 
 [MIT License](LICENSE)
 
-**You are responsible for the performance and any necessary testing or regulatory clearances for any models generated**
+### *You are responsible for the performance and any necessary testing or regulatory clearances for any models generated*
 
 ## Contributing
 
@@ -210,6 +221,7 @@ For more information see the [Code of Conduct FAQ](https://opensource.microsoft.
 contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
 
 ## Disclaimer
+
 The InnerEye-DeepLearning toolkit, InnerEye-Gateway and InnerEye-Inference (collectively the “Research Tools”) are provided AS-IS for use by third parties for the purposes of research, experimental design and testing of machine learning models. The Research Tools are not intended or made available for clinical use as a medical device, clinical support, diagnostic tool, or other technology intended to be used in the diagnosis, cure, mitigation, treatment, or prevention of disease or other conditions. The Research Tools are not designed or intended to be a substitute for professional medical advice, diagnosis, treatment, or judgment and should not be used as such. All users are responsible for reviewing the output of the developed model to determine whether the model meets the user’s needs and for validating and evaluating the model before any clinical use. Microsoft does not warrant that the Research Tools or any materials provided in connection therewith will be sufficient for any medical purposes or meet the health or medical requirements of any person.
 
 ## Microsoft Open Source Code of Conduct
@@ -218,6 +230,6 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
 
 ## Resources
 
-* [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/)
-* [Microsoft Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/)
-* Contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with questions or concerns
+- [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/)
+- [Microsoft Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/)
+- Contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with questions or concerns
