@@ -55,7 +55,7 @@ def create_run_config(azure_config: AzureConfig,
     entry_script_relative_path = source_config.entry_script.relative_to(source_config.root_folder).as_posix()
     logging.info(f"Entry script {entry_script_relative_path} ({source_config.entry_script} "
                  f"relative to source directory {source_config.root_folder})")
-    max_run_duration = None
+    max_run_duration = 43200  # 12 hours in seconds
     workspace = azure_config.get_workspace()
     run_config = RunConfiguration(script=entry_script_relative_path, arguments=source_config.script_params)
     env = Environment.get(azure_config.get_workspace(), name=environment_name, version=ENVIRONMENT_VERSION)
