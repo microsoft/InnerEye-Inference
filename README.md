@@ -34,7 +34,7 @@ conda activate inference
 Start the `conda` prompt for your platform. In that prompt, navigate to your repository root and run
 
 ```console
-conda env create --file environment_win.yml
+conda env create --file primary_deps.yml
 conda activate inference
 ```
 
