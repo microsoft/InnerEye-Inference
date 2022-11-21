@@ -116,7 +116,7 @@ def is_authenticated_request(req: Request) -> Optional[Response]:
 
 @inject
 @app.route("/", methods=['GET'])
-def health_check()-> Response:
+def health_check() -> Response:
     """
     Health check endpoint.
     :return: 200 OK.
