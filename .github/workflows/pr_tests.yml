@@ -1,0 +1,77 @@
+name: PR Tests
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  linux-build-and-test:
+    runs-on: ubuntu-20.04
+    steps:
+
+    - name: Checkout Repo
+      uses: actions/checkout@v2
+      with:
+        lfs: true
+
+    - name: Set Up Conda Environment
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+        miniconda-version: "latest"
+        activate-environment: inference
+        environment-file: ./environment.yml
+
+    - name: flake8
+      shell: bash -l {0}
+      run: |
+        conda activate inference
+        flake8 . --count --exit-zero --statistics
+
+    - name: mypy
+      shell: bash -l {0}
+      run: |
+        conda activate inference
+        find . -type f -name "*.py" | xargs mypy
+
+    - name: Test with pytest
+      shell: bash -l {0}
+      env:
+        CUSTOMCONNSTR_AZUREML_SERVICE_PRINCIPAL_SECRET: ${{ secrets.CUSTOMCONNSTR_AZUREML_SERVICE_PRINCIPAL_SECRET }}
+        CUSTOMCONNSTR_API_AUTH_SECRET: ${{ secrets.CUSTOMCONNSTR_API_AUTH_SECRET }}
+        CLUSTER: "training-nc12"
+        WORKSPACE_NAME: "InnerEye-DeepLearning"
+        EXPERIMENT_NAME: "api_inference"
+        RESOURCE_GROUP: "InnerEye-DeepLearning"
+        SUBSCRIPTION_ID: ${{ secrets.SUBSCRIPTION_ID }}
+        APPLICATION_ID: ${{ secrets.APPLICATION_ID }}
+        TENANT_ID: ${{ secrets.TENANT_ID }}
+        DATASTORE_NAME: "inferencetestimagestore"
+        IMAGE_DATA_FOLDER: "temp-image-store"
+      run: |
+        conda activate inference
+        pytest --cov=./ --cov-report=html
+
+  test-azure-deployment:
+    runs-on: ubuntu-20.04
+    concurrency:
+      group: ${{ github.head_ref }}
+      cancel-in-progress: true
+    steps:
+
+    - name: Checkout Repo
+      uses: actions/checkout@v2
+      with:
+        lfs: true
+
+    - name: Azure Login
+      uses: Azure/login@v1
+      with:
+        creds: '{"clientId":"${{ secrets.AZURE_CLIENT_ID }}","clientSecret":"${{ secrets.AZURE_CLIENT_SECRET }}","subscriptionId":"${{ secrets.SUBSCRIPTION_ID }}","tenantId":"${{ secrets.TENANT_ID }}"}'
+
+    - name: Deploy Azure App Service
+      uses: azure/CLI@v1
+      with:
+        azcliversion: 2.42.0
+        inlineScript: |
+          az webapp up --name innereyeinferencetest --subscription "InnerEye Dev" -g InnerEye-Inference --sku S1 --location ukwest --runtime PYTHON:3.7
+          az webapp delete --name innereyeinferencetest --subscription "InnerEye Dev" -g InnerEye-Inference
