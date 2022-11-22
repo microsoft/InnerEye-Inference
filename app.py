@@ -114,6 +114,16 @@ def is_authenticated_request(req: Request) -> Optional[Response]:
     return None
 
 
+@inject
+@app.route("/", methods=['GET'])
+def health_check() -> Response:
+    """
+    Health check endpoint.
+    :return: 200 OK.
+    """
+    return make_response(jsonify({'status': 'Healthy'}), HTTP_STATUS_CODE.OK.value)
+
+
 @app.route("/v1/ping", methods=['GET'])
 def ping() -> Response:
     authentication_response = is_authenticated_request(request)
