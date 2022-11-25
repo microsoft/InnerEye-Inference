@@ -51,10 +51,10 @@ def assert_response_error_type(response: TestResponse, status_code: HTTP_STATUS_
     assert response.status_code == status_code.value
     response_json = response.json
 
-    # this makes mypy happy that a dictionary has actually been returned 
+    # this makes mypy happy that a dictionary has actually been returned
     assert response_json is not None
 
-    assert len(response_json['code']) > 0 
+    assert len(response_json['code']) > 0
     assert len(response_json['detail']) > 0
     assert response_json['status'] == status_code.value
     assert len(response_json['title']) > 0
@@ -62,6 +62,14 @@ def assert_response_error_type(response: TestResponse, status_code: HTTP_STATUS_
         assert response_json['extra_details'] == extra_details.value
     else:
         assert 'extra_details' not in response_json
+
+def test_health_check() -> None:
+    """
+    Test that the health check endpoint returns 200.
+    """
+    with app.test_client() as client:
+        response = client.get("/")
+        assert response.status_code == HTTP_STATUS_CODE.OK.value
 
 
 def test_ping_unauthorized() -> None:
