@@ -171,7 +171,7 @@ and download the inference result as a zipped DICOM-RT file to `HN_rt.zip`.
 
 1. Install Azure CLI: `curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash`
 2. Login: `az login --use-device-code`
-3. Deploy: `az webapp up --sku S1 --name test-python12345 --subscription <your_subscription_name> -g InnerEyeInference --location <your region>`
+3. Deploy: `az webapp up --sku S1 --name test-python12345 --subscription <your_subscription_name> -g InnerEyeInference --location <your region> --runtime PYTHON:3.7`
 4. In the Azure portal go to Monitoring > Log Stream for debugging logs
 
 ### Deployment build
