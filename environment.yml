@@ -1,6 +1,6 @@
 name: inference
 dependencies:
-  - python=3.7.3
+  - python=3.7.15
   - pip
   - pip:
     - -r requirements.txt
