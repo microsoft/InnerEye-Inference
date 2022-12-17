@@ -1,8 +1,10 @@
-name: PR Tests
+name: Build, Test and Deploy
 
 on:
   pull_request:
     branches: [ main ]
+  schedule:
+    - cron:  '0 0 * * *'
 
 jobs:
   linux-build-and-test:

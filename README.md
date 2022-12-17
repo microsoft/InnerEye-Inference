@@ -1,17 +1,14 @@
 # Introduction
 
-InnerEye-Inference is a AppService webapp in python to run inference on medical imaging models trained with the [InnerEye-DeepLearning toolkit](https://github.com/microsoft/InnerEye-Inference).
+InnerEye-Inference is an App Service webapp in python to run inference on medical imaging models trained with the [InnerEye-DeepLearning toolkit](https://github.com/microsoft/InnerEye-Inference).
 
-You can also integrate this with DICOM using the  [InnerEye-Gateway](https://github.com/microsoft/InnerEye-Gateway)
+You can also integrate this with DICOM using the [InnerEye-Gateway](https://github.com/microsoft/InnerEye-Gateway).
 
 ## Getting Started
 
 ### Operating System
 
-If developing or using this tool locally, we highly recommend using [Ubuntu 20.04](https://releases.ubuntu.com/20.04/) as your operating system. This is for two reasons:
-
-- The Azure App Service base image will be Ubuntu. By developing locally in Ubuntu you can guarantee maximum repeatibility between local and cloud behaviour.
-- The provided `environment.yml` contains locked secondary package dependencies for Ubuntu **only**. We cannot guarantee identical functionality to our dev environments if you use other operating systems.
+If developing or using this tool locally, we highly recommend using [Ubuntu 20.04](https://releases.ubuntu.com/20.04/) as your operating system. This is as the Azure App Service base image will be Ubuntu. By developing locally in Ubuntu you can guarantee maximum repeatibility between local and cloud behaviour.
 
 For windows users this is easily done through [Windows Subsystem for Linux](https://learn.microsoft.com/en-us/windows/wsl/install).
 
@@ -24,30 +21,24 @@ and run it.
 
 Note that in order to create the Conda environment you will need to have build tools installed on your machine. If you are running Windows, they should be already installed with Conda distribution.
 
-You can install build tools on Ubuntu (and Debian-based distributions) by running
-`sudo apt-get install build-essential`.
-If you are running CentOS/RHEL distributions, you can install the build tools by running
-`yum install gcc gcc-c++ kernel-devel make`.
+You can install build tools on Ubuntu (and Debian-based distributions) by running:
 
-#### Ubuntu Users
+```shell
+sudo apt-get install build-essential
+```
 
-Start the `conda` prompt for your platform. In that prompt, navigate to your repository root and run
+If you are running CentOS/RHEL distributions, you can install the build tools by running:
+
+```shell
+yum install gcc gcc-c++ kernel-devel make
+```
+
+Start the `conda` prompt for your platform. In that prompt, navigate to your repository root and run:
 
 ```console
 conda env create --file environment.yml
 conda activate inference
 ```
-
-#### Other Operating Sytem Users
-
-Start the `conda` prompt for your platform. In that prompt, navigate to your repository root and run
-
-```console
-conda env create --file primary_deps.yml
-conda activate inference
-```
-
-This will build an environment from the primary package dependencies only. This means that the packages and versions that the primary packages depend upon will be different from those defined in `environment.yml` and as such may behave differently to the application when [deployed to Azure](#running-flask-app-in-azure).
 
 ### Configuration
 
@@ -185,16 +176,9 @@ If you would like to reproduce the automatic deployment of the service for testi
 
 During inference the image data zip file is copied to the IMAGE_DATA_FOLDER in the AzureML workspace's DATASTORE_NAME datastore. At the end of inference the copied image data zip file is overwritten with a simple line of text. At present we cannot delete these. If you would like these overwritten files removed from your datastore you can [add a policy](https://docs.microsoft.com/en-us/azure/storage/blobs/storage-lifecycle-management-concepts?tabs=azure-portal) to delete items from the datastore after a period of time. We recommend 7 days.
 
-## Changing Primary Dependencies
+## Changing Dependencies
 
-1. Make your desired changes in `primary_deps.yml`. Make sure your package name and version are correct.
-1. To create a new environment and a valid `environment.yml`, run the following command:
-
-   ```shell
-   bash -i create_and_lock_environment.sh
-   ```
-
-1. Voila! You will now have a new conda environment with your desired primary package versions, as well as a new `environment.yml` which can be ingested by AzureML to create a copy of your local environment.
+The Azure App Service will use the packages specified in `requirements.txt` to create the python virtual environment in which the flask app is run. The `environment.yml` is used for local environments only. Therefore if you want to change the packages your app service has access to, you must update `requirements.txt`.
 
 ## Help and Bug Reporting
 
