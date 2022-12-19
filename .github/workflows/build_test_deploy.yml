@@ -55,11 +55,7 @@ jobs:
 
   test-azure-deployment:
     runs-on: ubuntu-20.04
-    concurrency:
-      group: ${{ github.head_ref }}
-      cancel-in-progress: true
     steps:
-
     - name: Checkout Repo
       uses: actions/checkout@v2
       with:
@@ -75,5 +71,5 @@ jobs:
       with:
         azcliversion: 2.42.0
         inlineScript: |
-          az webapp up --name innereyeinferencetest --subscription "InnerEye Dev" -g InnerEye-Inference --sku S1 --location ukwest --runtime PYTHON:3.7
-          az webapp delete --name innereyeinferencetest --subscription "InnerEye Dev" -g InnerEye-Inference
+          az webapp up --name innereyeinferencetest-${{ github.run_id }} --subscription "InnerEye Dev" -g InnerEye-Inference --sku S1 --location ukwest --runtime PYTHON:3.7
+          az webapp delete --name innereyeinferencetest-${{ github.run_id }} --subscription "InnerEye Dev" -g InnerEye-Inference
