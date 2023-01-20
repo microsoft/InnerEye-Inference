@@ -2,7 +2,7 @@ azureml-sdk==1.41.0
 flake8==3.8.4
 flask-injector==0.13.0
 Flask==2.1.1
-hi-ml-azure==0.2.1
+hi-ml-azure==0.2.12
 memory-tempfile==2.2.3
 msrest==0.6.21
 mypy==0.790
