@@ -1,8 +1,6 @@
 name: inference
-channels:
-  - defaults
 dependencies:
-  - pip=20.1.1
-  - python=3.7.3
+  - python=3.7.15
+  - pip
   - pip:
-      - -r file:requirements.txt
+    - -r requirements.txt
