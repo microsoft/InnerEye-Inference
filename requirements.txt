@@ -5,7 +5,7 @@ Flask==2.3.2
 hi-ml-azure==0.2.1
 memory-tempfile==2.2.3
 msrest==0.6.21
-mypy==0.790
+mypy==1.2.0
 pydicom==2.1.2
 pytest-cov==2.10.1
 pytest==6.0.1
