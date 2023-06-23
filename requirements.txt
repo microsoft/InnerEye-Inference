@@ -8,6 +8,6 @@ msrest==0.6.21
 mypy==1.2.0
 pydicom==2.1.2
 pytest-cov==2.10.1
-pytest==6.0.1
+pytest==7.4.0
 SimpleITK==2.0.2
 Werkzeug==2.1.1
